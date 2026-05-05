@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, Mail, HelpCircle, ChevronRight, WhatsApp } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, MessageCircle, Mail, HelpCircle, ChevronRight } from "lucide-react";
 
 export default function SuportePage() {
   return (
@@ -11,14 +10,14 @@ export default function SuportePage() {
         <Link href="/" className="flex items-center gap-2 text-[#7A7A85] text-sm mb-12 hover:text-[#FF5C00] transition-colors no-underline">
           <ArrowLeft className="w-4 h-4" /> Voltar para a página inicial
         </Link>
-        
+
         <h1 className="font-bebas text-5xl mb-4 tracking-tight">Centro de <span className="text-[#FF5C00]">Suporte</span></h1>
         <p className="text-[#7A7A85] text-sm mb-12 font-mono uppercase tracking-widest">Estamos aqui para ajudar você a crescer.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-          <a 
-            href="https://wa.me/5500000000000" 
-            target="_blank" 
+          <a
+            href="https://wa.me/5500000000000"
+            target="_blank"
             className="group bg-[#111114] border border-[#222228] p-8 rounded-3xl hover:border-[#00E676]/30 transition-all no-underline"
           >
             <div className="w-12 h-12 bg-[#00E676]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -31,8 +30,8 @@ export default function SuportePage() {
             </span>
           </a>
 
-          <a 
-            href="mailto:suporte@fitdesk.com.br" 
+          <a
+            href="mailto:suporte@fitdesk.com.br"
             className="group bg-[#111114] border border-[#222228] p-8 rounded-3xl hover:border-[#FF5C00]/30 transition-all no-underline"
           >
             <div className="w-12 h-12 bg-[#FF5C00]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
