@@ -2,7 +2,9 @@
 
 O **FitDesk** é uma plataforma SaaS (Software as a Service) de alta performance desenhada especificamente para personal trainers que desejam profissionalizar sua gestão, eliminar o papel e escalar seu atendimento através de tecnologia e Inteligência Artificial.
 
-![FitDesk Preview](public/logo.png) <!-- Você pode substituir por um screenshot real depois -->
+<div align="center">
+  <img src="public/logo.png" alt="FitDesk Logo" width="400" />
+</div>
 
 ## 🚀 Funcionalidades Principais
 
