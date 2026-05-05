@@ -49,13 +49,14 @@ export default function DashboardSidebar() {
       <div className="p-6 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="font-bebas text-2xl text-[#F5F5F0] tracking-[2px]">
-              FIT<span className="text-[#FF5C00]">DESK</span>
+            <div className="flex items-center gap-2 font-bebas text-2xl text-[#F5F5F0] tracking-[2px]">
+              <img src="/favicon.png" alt="FitDesk Logo" className="w-8 h-8 rounded-lg" />
+              <span>FIT<span className="text-[#FF5C00]">DESK</span></span>
             </div>
           )}
           {isCollapsed && (
-            <div className="font-bebas text-2xl text-[#FF5C00] tracking-[1px] w-full text-center">
-              FD
+            <div className="w-full flex justify-center">
+              <img src="/favicon.png" alt="FitDesk Logo" className="w-8 h-8 rounded-lg" />
             </div>
           )}
           <button 

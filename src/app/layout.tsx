@@ -23,6 +23,9 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "FitDesk — Gestão Inteligente para Personal Trainers",
   description: "Gerencie sua academia pessoal como um CEO com agendamentos automáticos, fichas digitais e controle financeiro.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

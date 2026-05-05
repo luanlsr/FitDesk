@@ -19,8 +19,9 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-[5%] py-4.5 bg-[#0A0A0B]/85 backdrop-blur-md border-b border-[#222228]">
-      <Link href="/" onClick={handleLogoClick} className="font-bebas text-2xl text-[#F5F5F0] tracking-[2px] no-underline">
-        FIT<span className="text-[#FF5C00]">DESK</span>
+      <Link href="/" onClick={handleLogoClick} className="flex items-center gap-2 font-bebas text-2xl text-[#F5F5F0] tracking-[2px] no-underline">
+        <img src="/favicon.png" alt="FitDesk Logo" className="w-8 h-8 rounded-lg" />
+        <span>FIT<span className="text-[#FF5C00]">DESK</span></span>
       </Link>
 
       <ul className="hidden md:flex gap-8 list-none">
