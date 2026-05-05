@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background-custom: #0A0A0B;
+  --color-foreground-custom: #F5F5F0;
+  --color-primary: #FF5C00;
+  --color-primary-light: #FF7A2E;
+  --color-deep: #111114;
+  --color-card: #16161A;
+  --color-border: #222228;
+  --color-green: #00E676;
+  --color-muted: #7A7A85;
+  --color-text: #CFCFC8;
+  --color-alert: #FFD600;
+  --color-error: #FF4444;
+
+  --font-sans: var(--font-sora), ui-sans-serif, system-ui;
+  --font-bebas: var(--font-bebas-neue);
+  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular;
+}
+
+/* GARANTIR CURSOR POINTER EM TUDO CLICÁVEL */
+button, 
+select, 
+[role="button"],
+input[type="button"],
+input[type="submit"] {
+  cursor: pointer !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#0A0A0B] text-text font-sans selection:bg-primary/20;
+    overflow-x: hidden;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: .5;
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fadeUp .8s ease both;
+  }
+
+  .animate-pulse-custom {
+    animation: pulse 2s infinite;
+  }
+
+  /* UTILS DA LANDING PAGE */
+  .nav-logo {
+    font-family: var(--font-bebas-neue);
+    letter-spacing: 2px;
+  }
+
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(255, 92, 0, .06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 92, 0, .06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 100%);
+  }
+
+  .mockup-screen {
+    box-shadow: 0 40px 120px rgba(0, 0, 0, .6), 0 0 80px rgba(255, 92, 0, .08);
+  }
+
+  .hero-glow {
+    background: radial-gradient(ellipse, rgba(255, 92, 0, 0.18) 0%, transparent 70%);
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #FF5C00, transparent);
+    opacity: 0; transition: opacity .3s;
+  }
+  .feature-card:hover::before { opacity: 1; }
+
+  .cta-section::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(255, 92, 0, .12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(1.4); }
+}
+
+/* Landing page animation utilities */
+.anim-fade-up    { animation: fadeUp 0.7s ease both; }
+.anim-fade-in    { animation: fadeIn 0.7s ease both; }
+.anim-slide-right{ animation: slideInRight 0.7s ease both; }
+.anim-scale-in   { animation: scaleIn 0.6s ease both; }
+
+.anim-d1  { animation-delay: 0.05s; }
+.anim-d2  { animation-delay: 0.10s; }
+.anim-d3  { animation-delay: 0.15s; }
+.anim-d4  { animation-delay: 0.20s; }
+.anim-d5  { animation-delay: 0.25s; }
+.anim-d6  { animation-delay: 0.30s; }
+.anim-d7  { animation-delay: 0.35s; }
+.anim-d8  { animation-delay: 0.40s; }
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0B; }
+::-webkit-scrollbar-thumb { background: #222228; border-radius: 3px; }

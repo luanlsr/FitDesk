@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitDesk — Gestão Inteligente para Personal Trainers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0A0A0B;
+    --deep: #111114;
+    --card: #16161A;
+    --border: #222228;
+    --orange: #FF5C00;
+    --orange-light: #FF7A2E;
+    --orange-glow: rgba(255,92,0,0.18);
+    --green: #00E676;
+    --white: #F5F5F0;
+    --muted: #7A7A85;
+    --text: #CFCFC8;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none; z-index:0; opacity:.5;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 1.2rem 5%;
+    background: rgba(10,10,11,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--white);
+    letter-spacing: 2px;
+  }
+  .nav-logo span { color: var(--orange); }
+
+  .nav-links { display:flex; gap:2rem; list-style:none; }
+  .nav-links a { color: var(--muted); text-decoration:none; font-size:.875rem; font-weight:500; transition:color .2s; }
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    background: var(--orange);
+    color: #fff;
+    padding: .6rem 1.4rem;
+    border-radius: 6px;
+    font-size: .875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .2s, transform .15s;
+  }
+  .nav-cta:hover { background: var(--orange-light); transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding: 8rem 5% 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,92,0,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,92,0,.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 100%);
+  }
+
+  .hero-glow {
+    position:absolute; top:20%; left:50%; transform:translateX(-50%);
+    width:700px; height:400px;
+    background: radial-gradient(ellipse, var(--orange-glow) 0%, transparent 70%);
+    pointer-events:none;
+  }
+
+  .badge {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background: rgba(255,92,0,.12);
+    border: 1px solid rgba(255,92,0,.3);
+    color: var(--orange-light);
+    padding:.4rem 1rem;
+    border-radius: 999px;
+    font-size:.8rem;
+    font-weight:600;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    margin-bottom:1.5rem;
+    animation: fadeUp .8s ease both;
+  }
+
+  .pulse { width:8px; height:8px; background:var(--green); border-radius:50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    line-height: .95;
+    color: var(--white);
+    letter-spacing: 1px;
+    animation: fadeUp .8s .1s ease both;
+    position:relative;
+  }
+
+  h1 em {
+    font-style:normal;
+    color: var(--orange);
+    display:block;
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--muted);
+    max-width: 580px;
+    margin: 1.5rem auto 2.5rem;
+    font-weight: 300;
+    animation: fadeUp .8s .2s ease both;
+  }
+
+  .hero-actions {
+    display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;
+    animation: fadeUp .8s .3s ease both;
+  }
+
+  .btn-primary {
+    background: var(--orange);
+    color:#fff;
+    padding:.9rem 2.2rem;
+    border-radius:8px;
+    font-size:1rem;
+    font-weight:700;
+    text-decoration:none;
+    transition: all .2s;
+    box-shadow: 0 0 30px rgba(255,92,0,.35);
+  }
+  .btn-primary:hover { background:var(--orange-light); transform:translateY(-2px); box-shadow:0 0 50px rgba(255,92,0,.5); }
+
+  .btn-ghost {
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding:.9rem 2.2rem;
+    border-radius:8px;
+    font-size:1rem;
+    font-weight:500;
+    text-decoration:none;
+    transition: all .2s;
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--white); }
+
+  .hero-stats {
+    display:flex; gap:3rem; margin-top:4rem; flex-wrap:wrap; justify-content:center;
+    animation: fadeUp .8s .4s ease both;
+  }
+  .stat { text-align:center; }
+  .stat-num { font-family:'Bebas Neue', sans-serif; font-size:2.5rem; color:var(--white); }
+  .stat-num span { color:var(--orange); }
+  .stat-label { font-size:.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; }
+
+  /* MOCKUP STRIP */
+  .mockup-section {
+    padding:3rem 0;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .mockup-screen {
+    width: min(90%, 900px);
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow:hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 80px rgba(255,92,0,.08);
+    background: var(--deep);
+  }
+
+  .mockup-bar {
+    background: var(--card);
+    padding:.7rem 1rem;
+    display:flex; align-items:center; gap:.5rem;
+    border-bottom:1px solid var(--border);
+  }
+  .dot { width:10px;height:10px;border-radius:50%; }
+  .dot-r{background:#FF5F56;} .dot-y{background:#FFBD2E;} .dot-g{background:#27C93F;}
+
+  .mockup-body {
+    display:grid; grid-template-columns:220px 1fr;
+    min-height:400px;
+  }
+
+  .mock-sidebar {
+    background:#121216;
+    border-right:1px solid var(--border);
+    padding:1.5rem 1rem;
+  }
+
+  .mock-logo {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:1.4rem;
+    color:var(--white);
+    margin-bottom:2rem;
+    padding-left:.5rem;
+  }
+  .mock-logo span{color:var(--orange);}
+
+  .mock-nav-item {
+    display:flex; align-items:center; gap:.7rem;
+    padding:.6rem .8rem;
+    border-radius:6px;
+    margin-bottom:.3rem;
+    font-size:.8rem;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .mock-nav-item.active { background:var(--orange-glow); color:var(--orange); border:1px solid rgba(255,92,0,.2); }
+  .mock-nav-icon { width:16px;height:16px;background:currentColor;border-radius:3px;opacity:.7; }
+
+  .mock-main { padding:1.5rem; }
+
+  .mock-header {
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:1.5rem;
+  }
+  .mock-title { font-size:1rem;font-weight:600;color:var(--white); }
+  .mock-date { font-size:.75rem;color:var(--muted); font-family:'Space Mono',monospace; }
+
+  .mock-cards { display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.5rem; }
+  .mock-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:.8rem;
+  }
+  .mock-card-label { font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em; margin-bottom:.3rem; }
+  .mock-card-val { font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white); }
+  .mock-card-val.green{color:var(--green);}
+  .mock-card-val.orange{color:var(--orange);}
+
+  .mock-chart {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:1rem;
+    height:110px;
+    display:flex;align-items:flex-end;gap:6px;
+    overflow:hidden;
+  }
+  .bar {
+    flex:1;border-radius:4px 4px 0 0;background:var(--border);
+    position:relative;overflow:hidden;
+  }
+  .bar::after{content:'';position:absolute;bottom:0;left:0;right:0;background:var(--orange);border-radius:4px 4px 0 0;}
+  .bar:nth-child(1)::after{height:40%;}
+  .bar:nth-child(2)::after{height:65%;}
+  .bar:nth-child(3)::after{height:50%;}
+  .bar:nth-child(4)::after{height:80%;}
+  .bar:nth-child(5)::after{height:70%;}
+  .bar:nth-child(6)::after{height:90%;}
+  .bar:nth-child(7)::after{height:75%;}
+  .bar.highlight::after{background:var(--orange-light);}
+
+  /* SECTIONS */
+  section { padding: 5rem 5%; position:relative; }
+
+  .section-label {
+    font-family:'Space Mono',monospace;
+    font-size:.75rem;
+    color:var(--orange);
+    text-transform:uppercase;
+    letter-spacing:.15em;
+    margin-bottom:.8rem;
+  }
+
+  h2 {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(2.5rem,5vw,4rem);
+    color:var(--white);
+    line-height:1;
+    margin-bottom:1rem;
+  }
+  h2 span { color:var(--orange); }
+
+  .section-desc {
+    color:var(--muted);
+    font-size:1.05rem;
+    max-width:520px;
+    font-weight:300;
+  }
+
+  /* FEATURES GRID */
+  .features-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px,1fr));
+    gap:1.5rem;
+    margin-top:3rem;
+  }
+
+  .feature-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:2rem;
+    transition: border-color .3s, transform .3s;
+    position:relative;
+    overflow:hidden;
+  }
+  .feature-card::before {
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--orange),transparent);
+    opacity:0;transition:opacity .3s;
+  }
+  .feature-card:hover { border-color:rgba(255,92,0,.35); transform:translateY(-4px); }
+  .feature-card:hover::before { opacity:1; }
+
+  .feature-icon {
+    width:44px;height:44px;
+    background:var(--orange-glow);
+    border:1px solid rgba(255,92,0,.25);
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;
+    margin-bottom:1.2rem;
+  }
+
+  .feature-title { font-size:1rem;font-weight:600;color:var(--white);margin-bottom:.5rem; }
+  .feature-desc { font-size:.875rem;color:var(--muted);line-height:1.7; }
+
+  /* WHATSAPP SECTION */
+  .wpp-section {
+    background: var(--deep);
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+  }
+
+  .wpp-inner {
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:4rem;align-items:center;
+  }
+
+  .wpp-chat {
+    background:#111;
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+
+  .wpp-header {
+    background:#1a1a20;
+    padding:1rem 1.2rem;
+    display:flex;align-items:center;gap:.8rem;
+    border-bottom:1px solid var(--border);
+  }
+  .wpp-avatar { width:36px;height:36px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff; }
+  .wpp-name { font-size:.9rem;font-weight:600;color:var(--white); }
+  .wpp-status { font-size:.7rem;color:var(--green); }
+
+  .wpp-messages { padding:1rem;display:flex;flex-direction:column;gap:.8rem; }
+
+  .msg {
+    max-width:75%;
+    padding:.7rem .9rem;
+    border-radius:10px;
+    font-size:.8rem;
+    line-height:1.5;
+  }
+  .msg-user { align-self:flex-end;background:#1a5c2a;color:#d4f5da; border-radius:10px 10px 2px 10px; }
+  .msg-bot { align-self:flex-start;background:var(--card);color:var(--text);border:1px solid var(--border); border-radius:10px 10px 10px 2px; }
+  .msg-time { font-size:.65rem;opacity:.5;margin-top:.2rem;text-align:right; }
+  .msg-bot .msg-time { text-align:left; }
+
+  .wpp-footer {
+    padding:.8rem 1rem;
+    background:#1a1a20;
+    border-top:1px solid var(--border);
+    display:flex;gap:.5rem;align-items:center;
+  }
+  .wpp-input {
+    flex:1;background:#2a2a30;border:1px solid var(--border);
+    border-radius:999px;padding:.5rem 1rem;
+    font-size:.8rem;color:var(--muted);
+  }
+  .wpp-send {
+    width:34px;height:34px;border-radius:50%;
+    background:var(--orange);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:.85rem;
+  }
+
+  /* WORKOUT SECTION */
+  .workout-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .workout-header {
+    background:var(--deep);
+    padding:1rem 1.5rem;
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--border);
+  }
+  .workout-title { font-weight:600;color:var(--white);font-size:.95rem; }
+  .workout-badge { background:var(--orange-glow);color:var(--orange);padding:.3rem .7rem;border-radius:4px;font-size:.7rem;font-weight:600;font-family:'Space Mono',monospace; }
+
+  .exercise-row {
+    display:grid;grid-template-columns:3fr 1fr 1fr 1fr;
+    gap:.5rem;
+    padding:.8rem 1.5rem;
+    border-bottom:1px solid var(--border);
+    align-items:center;
+    font-size:.82rem;
+  }
+  .exercise-row:last-child { border-bottom:none; }
+  .exercise-row.header { background:var(--deep);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em; }
+  .exercise-name { color:var(--white);font-weight:500; }
+  .exercise-val { color:var(--muted);text-align:center; }
+  .exercise-val.orange { color:var(--orange); }
+  .done-check { width:16px;height:16px;border-radius:50%;background:var(--green);display:inline-block; }
+  .pend-check { width:16px;height:16px;border-radius:50%;border:2px solid var(--border);display:inline-block; }
+
+  /* ALUNO SECTION */
+  .aluno-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .aluno-top {
+    padding:1.5rem;
+    display:flex;gap:1rem;align-items:center;
+    border-bottom:1px solid var(--border);
+  }
+  .aluno-av {
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,var(--orange),#ff9a00);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;
+    flex-shrink:0;
+  }
+  .aluno-name { font-size:1rem;font-weight:600;color:var(--white); }
+  .aluno-obj { font-size:.78rem;color:var(--muted); }
+
+  .aluno-metrics {
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-bottom:1px solid var(--border);
+  }
+  .metric-box {
+    padding:1rem;
+    border-right:1px solid var(--border);
+    text-align:center;
+  }
+  .metric-box:last-child{border-right:none;}
+  .metric-val { font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--white); }
+  .metric-val.warn { color:#FFD600; }
+  .metric-label { font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em; }
+
+  .aluno-flags { padding:1rem 1.5rem;display:flex;gap:.5rem;flex-wrap:wrap; }
+  .flag {
+    padding:.25rem .7rem;border-radius:4px;
+    font-size:.7rem;font-weight:600;
+    font-family:'Space Mono',monospace;
+  }
+  .flag-red { background:rgba(255,50,50,.15);color:#FF6464;border:1px solid rgba(255,50,50,.25); }
+  .flag-yellow { background:rgba(255,214,0,.12);color:#FFD600;border:1px solid rgba(255,214,0,.2); }
+  .flag-blue { background:rgba(0,150,255,.12);color:#64B5FF;border:1px solid rgba(0,150,255,.2); }
+
+  .lgpd-note {
+    padding:.8rem 1.5rem;
+    background:rgba(0,230,118,.06);
+    border-top:1px solid rgba(0,230,118,.15);
+    font-size:.72rem;
+    color:var(--green);
+    display:flex;align-items:center;gap:.5rem;
+  }
+  .lgpd-icon { font-size:.9rem; }
+
+  /* PRICING */
+  .pricing-section { background:var(--deep); border-top:1px solid var(--border); }
+
+  .pricing-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:1.5rem;
+    margin-top:3rem;
+    max-width:960px;
+    margin-left:auto;margin-right:auto;
+  }
+
+  .plan-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:2rem;
+    position:relative;
+    transition:transform .3s;
+  }
+  .plan-card:hover { transform:translateY(-6px); }
+  .plan-card.featured {
+    border-color:var(--orange);
+    box-shadow:0 0 50px rgba(255,92,0,.15);
+  }
+
+  .plan-best {
+    position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    background:var(--orange);color:#fff;
+    padding:.3rem .9rem;border-radius:999px;
+    font-size:.72rem;font-weight:700;
+    letter-spacing:.05em;text-transform:uppercase;
+    white-space:nowrap;
+  }
+
+  .plan-name { font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white);margin-bottom:.3rem; }
+  .plan-desc { font-size:.82rem;color:var(--muted);margin-bottom:1.5rem; }
+
+  .plan-price {
+    margin-bottom:1.5rem;
+    display:flex;align-items:flex-end;gap:.3rem;
+  }
+  .plan-currency { font-size:.9rem;color:var(--muted);margin-bottom:.6rem; }
+  .plan-val { font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--white);line-height:1; }
+  .plan-period { font-size:.8rem;color:var(--muted);margin-bottom:.6rem; }
+
+  .plan-features { list-style:none;margin-bottom:2rem; }
+  .plan-features li {
+    display:flex;align-items:center;gap:.6rem;
+    font-size:.85rem;color:var(--text);
+    padding:.4rem 0;
+    border-bottom:1px solid rgba(255,255,255,.04);
+  }
+  .plan-features li:last-child{border-bottom:none;}
+  .check-ok { color:var(--green);font-weight:700; }
+  .check-no { color:var(--border); }
+
+  .plan-btn {
+    width:100%;
+    padding:.9rem;
+    border-radius:8px;
+    font-size:.9rem;
+    font-weight:700;
+    text-align:center;
+    text-decoration:none;
+    display:block;
+    transition:all .2s;
+    cursor:pointer;
+    border:none;
+  }
+  .plan-btn-outline {
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .plan-btn-outline:hover { border-color:var(--muted);color:var(--white); }
+  .plan-btn-solid {
+    background:var(--orange);
+    color:#fff;
+    box-shadow:0 0 30px rgba(255,92,0,.3);
+  }
+  .plan-btn-solid:hover { background:var(--orange-light);box-shadow:0 0 50px rgba(255,92,0,.5); }
+
+  /* TESTIMONIALS */
+  .testimonials-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:1.5rem;
+    margin-top:3rem;
+  }
+
+  .testimonial-card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:1.8rem;
+  }
+
+  .stars { color:var(--orange);font-size:1rem;margin-bottom:1rem; }
+  .testimonial-text { font-size:.9rem;color:var(--text);line-height:1.7;margin-bottom:1.2rem;font-style:italic; }
+  .testimonial-author { display:flex;align-items:center;gap:.8rem; }
+  .author-av {
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,var(--orange),#ff9a00);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.85rem;color:#fff;
+    flex-shrink:0;
+  }
+  .author-name { font-size:.85rem;font-weight:600;color:var(--white); }
+  .author-role { font-size:.75rem;color:var(--muted); }
+
+  /* FAQ */
+  .faq-list { max-width:700px;margin:3rem auto 0; }
+  .faq-item {
+    border-bottom:1px solid var(--border);
+  }
+  .faq-q {
+    padding:1.2rem 0;
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;
+    color:var(--white);
+    font-weight:500;
+    font-size:.95rem;
+    list-style:none;
+    user-select:none;
+  }
+  .faq-q::after { content:'+';color:var(--orange);font-size:1.3rem;transition:transform .3s; }
+  details[open] .faq-q::after { transform:rotate(45deg); }
+  .faq-a {
+    padding:0 0 1.2rem;
+    color:var(--muted);
+    font-size:.875rem;
+    line-height:1.7;
+  }
+
+  /* CTA FINAL */
+  .cta-section {
+    text-align:center;
+    padding:6rem 5%;
+    background:var(--deep);
+    border-top:1px solid var(--border);
+    position:relative;
+    overflow:hidden;
+  }
+  .cta-section::before {
+    content:'';
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:600px;height:300px;
+    background:radial-gradient(ellipse,rgba(255,92,0,.12) 0%,transparent 70%);
+    pointer-events:none;
+  }
+
+  .cta-section h2 { margin-bottom:1rem; }
+  .cta-section p { color:var(--muted);margin-bottom:2.5rem;font-size:1.05rem; }
+
+  /* FOOTER */
+  footer {
+    background:var(--black);
+    border-top:1px solid var(--border);
+    padding:3rem 5%;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:1rem;
+  }
+  .footer-logo { font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--white); }
+  .footer-logo span{color:var(--orange);}
+  .footer-copy { font-size:.8rem;color:var(--muted); }
+  .footer-links { display:flex;gap:1.5rem; }
+  .footer-links a { font-size:.8rem;color:var(--muted);text-decoration:none; }
+  .footer-links a:hover { color:var(--white); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from{opacity:0;transform:translateY(24px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  .reveal {
+    opacity:0;transform:translateY(30px);
+    transition:opacity .7s ease,transform .7s ease;
+  }
+  .revealed { opacity:1;transform:translateY(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--black); }
+  ::-webkit-scrollbar-thumb { background:var(--border);border-radius:3px; }
+
+  /* RESPONSIVE */
+  @media(max-width:768px){
+    .nav-links{display:none;}
+    .wpp-inner{grid-template-columns:1fr;}
+    .mockup-body{grid-template-columns:1fr;}
+    .mock-sidebar{display:none;}
+    .mock-cards{grid-template-columns:repeat(2,1fr);}
+    .aluno-metrics{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">FIT<span>DESK</span></div>
+  <ul class="nav-links">
+    <li><a href="#funcionalidades">Funcionalidades</a></li>
+    <li><a href="#treinos">Treinos</a></li>
+    <li><a href="#alunos">Alunos</a></li>
+    <li><a href="#precos">Preços</a></li>
+  </ul>
+  <a href="#precos" class="nav-cta">Começar agora →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="badge">
+    <span class="pulse"></span>
+    Novo · IA integrada ao WhatsApp
+  </div>
+
+  <h1>Gerencie sua<br><em>academia pessoal</em><br>como um CEO</h1>
+
+  <p class="hero-sub">
+    Agendamentos automáticos via WhatsApp, fichas de treino digitais, controle financeiro e relatórios inteligentes. Tudo que um personal precisa em um único dashboard.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#precos" class="btn-primary">Teste grátis por 14 dias</a>
+    <a href="#funcionalidades" class="btn-ghost">Ver funcionalidades</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">2.4<span>K</span></div>
+      <div class="stat-label">Personals ativos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">98<span>%</span></div>
+      <div class="stat-label">Satisfação</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3<span>h</span></div>
+      <div class="stat-label">Poupadas por semana</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0<span>papel</span></div>
+      <div class="stat-label">Fichas físicas</div>
+    </div>
+  </div>
+</section>
+
+<!-- MOCKUP -->
+<div class="mockup-section">
+  <div class="mockup-screen">
+    <div class="mockup-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+    </div>
+    <div class="mockup-body">
+      <div class="mock-sidebar">
+        <div class="mock-logo">FIT<span>DESK</span></div>
+        <div class="mock-nav-item active">
+          <div class="mock-nav-icon"></div> Dashboard
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Agenda
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Alunos
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Treinos
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Financeiro
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Leads
+        </div>
+        <div class="mock-nav-item">
+          <div class="mock-nav-icon"></div> Relatórios
+        </div>
+      </div>
+      <div class="mock-main">
+        <div class="mock-header">
+          <div class="mock-title">Visão Geral · Março 2026</div>
+          <div class="mock-date">DOM 22/03/2026 · 09:14</div>
+        </div>
+        <div class="mock-cards">
+          <div class="mock-card">
+            <div class="mock-card-label">Alunos ativos</div>
+            <div class="mock-card-val">34</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-label">Receita / mês</div>
+            <div class="mock-card-val green">R$12.8k</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-label">Aulas hoje</div>
+            <div class="mock-card-val orange">7</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-card-label">Cancelamentos</div>
+            <div class="mock-card-val">2</div>
+          </div>
+        </div>
+        <div class="mock-chart">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar highlight"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="funcionalidades">
+  <div class="section-label">Funcionalidades</div>
+  <h2>Tudo que você precisa,<br><span>sem nada sobrando</span></h2>
+  <p class="section-desc">Desenvolvido para a realidade do personal trainer brasileiro. Simples de usar, poderoso para crescer.</p>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">IA no WhatsApp</div>
+      <div class="feature-desc">Alunos agendam, remarcam e cancelam aulas diretamente no WhatsApp. A IA responde 24h, confirma horários e atualiza sua agenda automaticamente.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">Agenda Inteligente</div>
+      <div class="feature-desc">Visualize sua semana completa, gerencie conflitos, defina bloqueios e receba alertas de encaixes disponíveis. Tudo em tempo real.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <div class="feature-title">Controle Financeiro</div>
+      <div class="feature-desc">Receitas, inadimplências, cobranças automáticas, relatórios mensais e projeções. Saiba exatamente quanto você vai ganhar ainda neste mês.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏋️</div>
+      <div class="feature-title">Fichas de Treino Digitais</div>
+      <div class="feature-desc">Monte treinos individuais com exercícios, séries, repetições e cargas. Atualize em tempo real. Elimine a ficha de papel para sempre.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Relatórios & Analytics</div>
+      <div class="feature-desc">Alunos mais fiéis, frequência de treinos, evolução de cargas, NPS e muito mais. Dados que te ajudam a tomar decisões de negócio.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Gestão de Leads</div>
+      <div class="feature-desc">Funil de captação, follow-up automático via WhatsApp, taxa de conversão e histórico de contatos. Nunca mais perca um potencial aluno.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📏</div>
+      <div class="feature-title">Avaliação Física Completa</div>
+      <div class="feature-desc">IMC, % de gordura, TMB, histórico de medidas, evolução gráfica. Seus alunos veem o progresso e você mantém credibilidade profissional.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">100% Conformidade LGPD</div>
+      <div class="feature-desc">Dados sensíveis criptografados, consentimento documentado, acesso por autorização. Proteção jurídica para você e seus alunos.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <div class="feature-title">Ranking de Fidelidade</div>
+      <div class="feature-desc">Identifique seus alunos mais comprometidos, os que faltam mais e os que têm risco de churn. Retenha antes de perder.</div>
+    </div>
+  </div>
+</section>
+
+<!-- WHATSAPP IA -->
+<section class="wpp-section" id="ia">
+  <div class="wpp-inner reveal">
+    <div>
+      <div class="section-label">IA no WhatsApp</div>
+      <h2>Sua agenda<br><span>gerencia sozinha</span></h2>
+      <p class="section-desc" style="margin-bottom:2rem">
+        Chega de responder mensagem às 23h para confirmar horário. A IA do FitDesk atende seus alunos, gerencia a agenda e te notifica apenas quando precisa da sua decisão.
+      </p>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.8rem">
+        <li style="display:flex;gap:.8rem;align-items:flex-start;font-size:.9rem;color:var(--text)">
+          <span style="color:var(--green);font-weight:700;margin-top:.1rem">✓</span>
+          Agendamento automático com confirmação em segundos
+        </li>
+        <li style="display:flex;gap:.8rem;align-items:flex-start;font-size:.9rem;color:var(--text)">
+          <span style="color:var(--green);font-weight:700;margin-top:.1rem">✓</span>
+          Remarcação sem precisar de você
+        </li>
+        <li style="display:flex;gap:.8rem;align-items:flex-start;font-size:.9rem;color:var(--text)">
+          <span style="color:var(--green);font-weight:700;margin-top:.1rem">✓</span>
+          Cancelamento com reagendamento imediato
+        </li>
+        <li style="display:flex;gap:.8rem;align-items:flex-start;font-size:.9rem;color:var(--text)">
+          <span style="color:var(--green);font-weight:700;margin-top:.1rem">✓</span>
+          Lembrete de aulas e cobrança automática
+        </li>
+      </ul>
+    </div>
+
+    <div class="wpp-chat">
+      <div class="wpp-header">
+        <div class="wpp-avatar">FD</div>
+        <div>
+          <div class="wpp-name">FitDesk IA · Carlos Carvalho</div>
+          <div class="wpp-status">● Online</div>
+        </div>
+      </div>
+      <div class="wpp-messages">
+        <div class="msg msg-user">
+          Oi! Quero marcar uma aula para quinta-feira
+          <div class="msg-time">09:12</div>
+        </div>
+        <div class="msg msg-bot">
+          Olá, Juliana! 😊 Quinta-feira tenho disponibilidade às <strong style="color:var(--orange)">07:00</strong>, <strong style="color:var(--orange)">09:00</strong> e <strong style="color:var(--orange)">18:30</strong>. Qual prefere?
+          <div class="msg-time">09:12</div>
+        </div>
+        <div class="msg msg-user">
+          18:30 perfeito!
+          <div class="msg-time">09:13</div>
+        </div>
+        <div class="msg msg-bot">
+          ✅ Confirmado! Quinta-feira, 27/03 às 18:30h. Vou te lembrar no dia anterior. Quer que eu avise o Carlos também?
+          <div class="msg-time">09:13</div>
+        </div>
+        <div class="msg msg-user">
+          Sim, por favor!
+          <div class="msg-time">09:14</div>
+        </div>
+        <div class="msg msg-bot">
+          Feito! Sua aula está agendada. Até quinta! 💪
+          <div class="msg-time">09:14</div>
+        </div>
+      </div>
+      <div class="wpp-footer">
+        <div class="wpp-input">Digite uma mensagem...</div>
+        <div class="wpp-send">→</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TREINOS -->
+<section id="treinos">
+  <div class="section-label">Fichas Digitais</div>
+  <h2>Substitua a ficha de papel<br><span>de uma vez por todas</span></h2>
+  <p class="section-desc" style="margin-bottom:2.5rem">Monte treinos individualizados, controle carga e rep por rep. Seu aluno acessa pelo celular. Você atualiza em tempo real.</p>
+
+  <div class="workout-card reveal" style="max-width:700px">
+    <div class="workout-header">
+      <div>
+        <div class="workout-title">Treino A — Hipertrofia · Juliana Mendes</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">Atualizado hoje · 4 semanas de progresso</div>
+      </div>
+      <div class="workout-badge">SEMANA 4</div>
+    </div>
+
+    <div class="exercise-row header">
+      <div>Exercício</div>
+      <div style="text-align:center">Séries</div>
+      <div style="text-align:center">Rep</div>
+      <div style="text-align:center">Carga</div>
+    </div>
+    <div class="exercise-row">
+      <div class="exercise-name">Supino Reto <span class="done-check" style="margin-left:.4rem"></span></div>
+      <div class="exercise-val">4</div>
+      <div class="exercise-val">10-12</div>
+      <div class="exercise-val orange">32 kg</div>
+    </div>
+    <div class="exercise-row">
+      <div class="exercise-name">Crucifixo Inclinado <span class="done-check" style="margin-left:.4rem"></span></div>
+      <div class="exercise-val">3</div>
+      <div class="exercise-val">12</div>
+      <div class="exercise-val orange">14 kg</div>
+    </div>
+    <div class="exercise-row">
+      <div class="exercise-name">Peck Deck <span class="pend-check" style="margin-left:.4rem"></span></div>
+      <div class="exercise-val">3</div>
+      <div class="exercise-val">15</div>
+      <div class="exercise-val">40 kg</div>
+    </div>
+    <div class="exercise-row">
+      <div class="exercise-name">Rosca Direta <span class="pend-check" style="margin-left:.4rem"></span></div>
+      <div class="exercise-val">4</div>
+      <div class="exercise-val">10</div>
+      <div class="exercise-val">18 kg</div>
+    </div>
+    <div class="exercise-row">
+      <div class="exercise-name">Tríceps Corda <span class="pend-check" style="margin-left:.4rem"></span></div>
+      <div class="exercise-val">3</div>
+      <div class="exercise-val">12-15</div>
+      <div class="exercise-val">25 kg</div>
+    </div>
+  </div>
+</section>
+
+<!-- ALUNO -->
+<section id="alunos" style="background:var(--deep);border-top:1px solid var(--border)">
+  <div class="section-label">Cadastro de Alunos</div>
+  <h2>Tudo sobre<br><span>seu aluno em um lugar</span></h2>
+  <p class="section-desc" style="margin-bottom:2.5rem">Dados pessoais, avaliação física completa, alertas médicos e progresso. Com total conformidade à LGPD.</p>
+
+  <div class="aluno-card reveal" style="max-width:680px">
+    <div class="aluno-top">
+      <div class="aluno-av">JM</div>
+      <div>
+        <div class="aluno-name">Juliana Mendes · 28 anos</div>
+        <div class="aluno-obj">Objetivo: Hipertrofia · Aluna desde Jan/2025</div>
+      </div>
+    </div>
+    <div class="aluno-metrics">
+      <div class="metric-box">
+        <div class="metric-val">62.4</div>
+        <div class="metric-label">Peso (kg)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">1.65</div>
+        <div class="metric-label">Altura (m)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val warn">22.9</div>
+        <div class="metric-label">IMC</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">24.1<span style="font-size:.9rem">%</span></div>
+        <div class="metric-label">% Gordura</div>
+      </div>
+    </div>
+    <div class="metric-box" style="border-top:1px solid var(--border);padding:1rem 1.5rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;background:var(--deep)">
+      <div>
+        <div class="metric-val" style="font-size:1.2rem">1.420</div>
+        <div class="metric-label">TMB (kcal)</div>
+      </div>
+      <div>
+        <div class="metric-val" style="font-size:1.2rem">47.1</div>
+        <div class="metric-label">Massa Magra</div>
+      </div>
+      <div>
+        <div class="metric-val" style="font-size:1.2rem">92</div>
+        <div class="metric-label">Frequência (%)</div>
+      </div>
+    </div>
+    <div class="aluno-flags">
+      <span class="flag flag-red">⚠ Lesão no joelho D</span>
+      <span class="flag flag-yellow">Histórico: hipertensão</span>
+      <span class="flag flag-blue">Autorização médica OK</span>
+    </div>
+    <div class="lgpd-note">
+      <span class="lgpd-icon">🔒</span>
+      Dados sensíveis protegidos por criptografia · Acesso autorizado pela aluna em 15/01/2025 · Conformidade LGPD
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="precos">
+  <div style="text-align:center">
+    <div class="section-label">Planos & Preços</div>
+    <h2>Investimento que se<br><span>paga no primeiro mês</span></h2>
+    <p class="section-desc" style="margin:0 auto">Sem contrato de fidelidade. Cancele quando quiser. Suporte incluído em todos os planos.</p>
+  </div>
+
+  <div class="pricing-grid reveal">
+    <!-- STARTER -->
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-desc">Para quem está começando</div>
+      <div class="plan-price">
+        <span class="plan-currency">R$</span>
+        <span class="plan-val">97</span>
+        <span class="plan-period">/mês</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="check-ok">✓</span> Até 15 alunos</li>
+        <li><span class="check-ok">✓</span> Agenda básica</li>
+        <li><span class="check-ok">✓</span> Fichas de treino digitais</li>
+        <li><span class="check-ok">✓</span> Avaliação física</li>
+        <li><span class="check-ok">✓</span> Controle financeiro simples</li>
+        <li><span class="check-no">✗</span> <span style="color:var(--muted)">IA no WhatsApp</span></li>
+        <li><span class="check-no">✗</span> <span style="color:var(--muted)">Gestão de Leads</span></li>
+        <li><span class="check-no">✗</span> <span style="color:var(--muted)">Relatórios avançados</span></li>
+      </ul>
+      <a href="#" class="plan-btn plan-btn-outline">Começar grátis</a>
+    </div>
+
+    <!-- PRO -->
+    <div class="plan-card featured">
+      <div class="plan-best">Mais popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-desc">Para o personal em crescimento</div>
+      <div class="plan-price">
+        <span class="plan-currency">R$</span>
+        <span class="plan-val" style="color:var(--orange)">197</span>
+        <span class="plan-period">/mês</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="check-ok">✓</span> Alunos ilimitados</li>
+        <li><span class="check-ok">✓</span> <strong style="color:var(--orange-light)">IA no WhatsApp</strong></li>
+        <li><span class="check-ok">✓</span> Agenda avançada + remarcação IA</li>
+        <li><span class="check-ok">✓</span> Fichas de treino + vídeos</li>
+        <li><span class="check-ok">✓</span> Avaliação física completa</li>
+        <li><span class="check-ok">✓</span> Gestão de Leads + CRM</li>
+        <li><span class="check-ok">✓</span> Relatórios financeiros completos</li>
+        <li><span class="check-ok">✓</span> Ranking de fidelidade</li>
+      </ul>
+      <a href="#" class="plan-btn plan-btn-solid">Começar grátis 14 dias</a>
+    </div>
+
+    <!-- ELITE -->
+    <div class="plan-card">
+      <div class="plan-name">Elite</div>
+      <div class="plan-desc">Para studios e multi-personal</div>
+      <div class="plan-price">
+        <span class="plan-currency">R$</span>
+        <span class="plan-val">397</span>
+        <span class="plan-period">/mês</span>
+      </div>
+      <ul class="plan-features">
+        <li><span class="check-ok">✓</span> Tudo do Pro</li>
+        <li><span class="check-ok">✓</span> Múltiplos personals (até 5)</li>
+        <li><span class="check-ok">✓</span> White-label (sua marca)</li>
+        <li><span class="check-ok">✓</span> API aberta + integrações</li>
+        <li><span class="check-ok">✓</span> Dashboard gerencial unificado</li>
+        <li><span class="check-ok">✓</span> Suporte prioritário 24h</li>
+        <li><span class="check-ok">✓</span> Onboarding dedicado</li>
+        <li><span class="check-ok">✓</span> Relatórios exportáveis (PDF/XLS)</li>
+      </ul>
+      <a href="#" class="plan-btn plan-btn-outline">Falar com consultor</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section>
+  <div class="section-label">Depoimentos</div>
+  <h2>Personals que <span>transformaram</span><br>seu negócio</h2>
+
+  <div class="testimonials-grid reveal">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Antes eu passava 2 horas por dia respondendo WhatsApp. Hoje a IA faz tudo isso pra mim e eu uso esse tempo pra dar mais aulas. Minha renda aumentou 40% em 3 meses."</p>
+      <div class="testimonial-author">
+        <div class="author-av">RC</div>
+        <div>
+          <div class="author-name">Rafael Costa</div>
+          <div class="author-role">Personal · São Paulo, SP</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"A ficha digital foi o que mais me surpreendeu. Meus alunos adoram ver a evolução no celular. Parei de usar papel completamente e meus alunos estão mais engajados."</p>
+      <div class="testimonial-author">
+        <div class="author-av">AP</div>
+        <div>
+          <div class="author-name">Amanda Pires</div>
+          <div class="author-role">Personal & Nutricionista · BH</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"O relatório financeiro me mostrou que eu estava perdendo R$1.800/mês em inadimplência. Com a cobrança automática resolvi isso na primeira semana."</p>
+      <div class="testimonial-author">
+        <div class="author-av">LF</div>
+        <div>
+          <div class="author-name">Lucas Ferreira</div>
+          <div class="author-role">Studio Owner · Rio de Janeiro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="background:var(--deep);border-top:1px solid var(--border)">
+  <div style="text-align:center;margin-bottom:1rem">
+    <div class="section-label">FAQ</div>
+    <h2>Perguntas <span>frequentes</span></h2>
+  </div>
+
+  <div class="faq-list">
+    <details class="faq-item">
+      <summary class="faq-q">Preciso saber programar para usar o FitDesk?</summary>
+      <p class="faq-a">Não. O FitDesk foi desenhado para ser usado por qualquer personal, sem nenhum conhecimento técnico. A configuração inicial leva menos de 30 minutos e temos onboarding guiado.</p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">Como funciona a IA no WhatsApp?</summary>
+      <p class="faq-a">Você conecta o número do WhatsApp que usa para falar com os alunos. A IA responde automaticamente às mensagens de agendamento, cancelamento e remarcação, consultando sua agenda em tempo real. Mensagens fora do escopo de agenda são encaminhadas para você.</p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">Os dados dos meus alunos estão seguros?</summary>
+      <p class="faq-a">Sim. Todos os dados são criptografados em trânsito e em repouso. O sistema é 100% adequado à LGPD, com termo de consentimento digital para cada aluno. Dados sensíveis como condições médicas só são acessíveis por você, com autorização expressa do aluno documentada.</p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">Posso migrar meus alunos do sistema atual?</summary>
+      <p class="faq-a">Sim. Oferecemos importação via planilha Excel ou CSV. Nossa equipe auxilia na migração nos planos Pro e Elite sem custo adicional.</p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">Tem contrato de fidelidade?</summary>
+      <p class="faq-a">Não. Você pode cancelar a qualquer momento, sem multa. O acesso continua até o final do período pago.</p>
+    </details>
+    <details class="faq-item">
+      <summary class="faq-q">E se eu tiver mais de 5 personals no meu studio?</summary>
+      <p class="faq-a">Entre em contato pelo WhatsApp para um plano personalizado. Atendemos studios de qualquer tamanho com preços especiais para volumes acima de 5 profissionais.</p>
+    </details>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <div class="section-label">Comece agora</div>
+  <h2>Seu negócio merece<br><span>tecnologia de ponta</span></h2>
+  <p>14 dias grátis. Sem cartão de crédito. Cancele quando quiser.</p>
+  <div class="hero-actions" style="justify-content:center">
+    <a href="#" class="btn-primary">Criar minha conta grátis →</a>
+    <a href="#" class="btn-ghost">Falar com um especialista</a>
+  </div>
+  <p style="margin-top:1.5rem;font-size:.8rem;color:var(--muted)">Mais de 2.400 personals já usam o FitDesk</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">FIT<span>DESK</span></div>
+  <div class="footer-links">
+    <a href="#">Política de Privacidade</a>
+    <a href="#">Termos de Uso</a>
+    <a href="#">LGPD</a>
+    <a href="#">Suporte</a>
+  </div>
+  <div class="footer-copy">© 2026 FitDesk · Todos os direitos reservados</div>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        e.target.classList.add('revealed');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.bar').forEach((b,i) => {
+      b.style.transition = `height .6s ease ${i*0.08}s`;
+    });
+  }, 500);
+</script>
+</body>
+</html>
