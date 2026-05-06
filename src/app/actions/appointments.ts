@@ -80,3 +80,18 @@ export async function deleteAppointment(id: string) {
     return { success: false, error: "Falha ao remover agendamento" };
   }
 }
+
+export async function updateAppointmentStatus(id: string, status: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
+
+  try {
+    await appointmentService.update(id, session.user.id, { status });
+    revalidatePath("/agenda");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating appointment status:", error);
+    return { success: false, error: "Falha ao atualizar status" };
+  }
+}
