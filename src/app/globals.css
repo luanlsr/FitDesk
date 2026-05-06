@@ -104,6 +104,27 @@ input[type="submit"] {
   }
 }
 
+  /* UTILITIES MOBILE */
+  .hide-on-mobile {
+    @apply hidden md:block;
+  }
+  .show-only-mobile {
+    @apply block md:hidden;
+  }
+  
+  .mobile-p-safe {
+    @apply px-4 py-6 md:p-8;
+  }
+
+  /* INDICADOR DE SCROLL HORIZONTAL */
+  .scroll-hint::after {
+    content: '';
+    position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
+    background: linear-gradient(90deg, transparent, rgba(10, 10, 11, 0.8));
+    pointer-events: none;
+    @apply md:hidden;
+  }
+  
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
@@ -148,3 +169,12 @@ input[type="submit"] {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0A0A0B; }
 ::-webkit-scrollbar-thumb { background: #222228; border-radius: 3px; }
+
+/* MOBILE CARD GRID */
+.mobile-card-list {
+  @apply grid grid-cols-1 gap-4 md:hidden;
+}
+
+.mobile-card {
+  @apply bg-[#16161A] border border-[#222228] p-5 rounded-2xl;
+}

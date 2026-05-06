@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,28 +8,24 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
+  id              String            @id @default(cuid())
   name            String?
-  email           String?   @unique
-  emailVerified   DateTime?
-  password        String?   // Hashed para Credentials
-  role            String    @default("PERSONAL") // MASTER, PERSONAL, STUDENT
+  email           String?           @unique
+  password        String?
+  role            String            @default("PERSONAL")
   image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  emailVerified   DateTime?
   accounts        Account[]
-  sessions        Session[]
-  leads           Lead[]
   appointments    Appointment[]
-  workouts        Workout[]
-  exerciseLibrary LibraryExercise[]
   transactions    FinancialEntry[]
-  
-  // Perfil de Aluno (Vínculo para login de aluno)
-  studentProfile  Student?  @relation("StudentProfile")
-  
-  // FitDesk Fields
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  students        Student[] @relation("PersonalStudents")
+  leads           Lead[]
+  exerciseLibrary LibraryExercise[]
+  sessions        Session[]
+  students        Student[]         @relation("PersonalStudents")
+  studentProfile  Student?          @relation("StudentProfile")
+  workouts        Workout[]
 }
 
 model Account {
@@ -41,15 +34,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? 
-  access_token      String? 
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? 
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -71,161 +63,136 @@ model VerificationToken {
 }
 
 model Student {
-  id              String   @id @default(cuid())
-  name            String
-  cpf             String?
-  email           String?
-  phone           String?
-  birthDate       DateTime?
-  gender          String?
-  status          String   @default("Ativo")
-  goal            String?
-  startDate       DateTime @default(now())
-  conheceuEm      String?
-  
-  // Login do Aluno (Link opcional para acesso do próprio aluno)
-  associatedUserId String? @unique
-  associatedUser   User?   @relation("StudentProfile", fields: [associatedUserId], references: [id])
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relacionamento com o Personal
-  userId          String?
-  user            User?    @relation("PersonalStudents", fields: [userId], references: [id])
-
-  // Anamnese Detalhada
-  lesions         String?
-  conditions      String?
-  medications     String?
-  restricoes      String?
-  cirurgias       String?
-  hipertensao     Boolean  @default(false)
-  diabetes        Boolean  @default(false)
-  fumante         Boolean  @default(false)
-  observacoes     String?
-
-  // Conformidade LGPD & Segurança
-  acceptedTerms   Boolean   @default(false)
-  acceptedTermsAt DateTime?
-  deletedAt       DateTime? // Soft delete para conformidade
-
-  paymentDay      Int?      // Dia do vencimento
-  planValue       Float?    // Valor da mensalidade combinada
-  
-  appointments    Appointment[]
-  assessments     Assessment[]
-  workouts        Workout[]
-  transactions    FinancialEntry[]
+  id               String           @id @default(cuid())
+  name             String
+  cpf              String?
+  email            String?
+  phone            String?
+  birthDate        DateTime?
+  gender           String?
+  status           String           @default("Ativo")
+  goal             String?
+  startDate        DateTime         @default(now())
+  conheceuEm       String?
+  associatedUserId String?          @unique
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  userId           String?
+  lesions          String?
+  conditions       String?
+  medications      String?
+  restricoes       String?
+  cirurgias        String?
+  hipertensao      Boolean          @default(false)
+  diabetes         Boolean          @default(false)
+  fumante          Boolean          @default(false)
+  observacoes      String?
+  acceptedTerms    Boolean          @default(false)
+  acceptedTermsAt  DateTime?
+  deletedAt        DateTime?
+  paymentDay       Int?
+  planValue        Float?
+  appointments     Appointment[]
+  assessments      Assessment[]
+  transactions     FinancialEntry[]
+  user             User?            @relation("PersonalStudents", fields: [userId], references: [id])
+  associatedUser   User?            @relation("StudentProfile", fields: [associatedUserId], references: [id])
+  workouts         Workout[]
 }
 
 model FinancialEntry {
-  id              String   @id @default(cuid())
-  description     String
-  amount          Float
-  type            String   // IN (Receita), OUT (Despesa)
-  category        String   // Mensalidade, Equipamento, Aluguel, Marketing, etc.
-  date            DateTime @default(now())
-  
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  studentId       String?
-  student         Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  type        String
+  category    String
+  date        DateTime @default(now())
+  userId      String
+  studentId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student     Student? @relation(fields: [studentId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Assessment {
-  id              String   @id @default(cuid())
-  date            DateTime @default(now())
-  weight          Float?
-  height          Float?
-  imc             Float?
-  bodyFat         Float?
-  muscleMass      Float?
-  
-  // Circunferências
-  waist           Float?
-  hip             Float?
-  chest           Float?
-  
-  studentId       String
-  student         Student  @relation(fields: [studentId], references: [id])
+  id         String   @id @default(cuid())
+  date       DateTime @default(now())
+  weight     Float?
+  height     Float?
+  imc        Float?
+  bodyFat    Float?
+  muscleMass Float?
+  waist      Float?
+  hip        Float?
+  chest      Float?
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
 }
 
 model Workout {
-  id              String   @id @default(cuid())
-  name            String   // Treino A, B, etc.
-  description     String?
-  
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  studentId       String
-  student         Student  @relation(fields: [studentId], references: [id])
-  exercises       Exercise[]
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  studentId   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  exercises   Exercise[]
+  student     Student    @relation(fields: [studentId], references: [id])
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Exercise {
-  id              String   @id @default(cuid())
-  name            String
-  sets            Int
-  reps            String
-  weight          String?
-  rest            String?
-  workoutId       String
-  workout         Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  name      String
+  sets      Int
+  reps      String
+  weight    String?
+  rest      String?
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
 }
 
 model LibraryExercise {
-  id              String   @id @default(cuid())
-  name            String
-  category        String   // Ex: Peito, Costas, Pernas...
-  videoUrl        String?
-  
-  userId          String?  // Opcional: exercícios globais ou personalizados do personal
-  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  videoUrl    String?
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  description String?
+  imageUrl    String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
-  id              String   @id @default(cuid())
-  title           String   // Ex: Treino de Pernas, Avaliação
-  description     String?
-  start           DateTime
-  end             DateTime
-  status          String   @default("Agendado") // Agendado, Concluído, Cancelado, Falta
-  
-  userId          String   // Personal Trainer
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  studentId       String?  // Opcional caso seja bloqueio de agenda
-  student         Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  start       DateTime
+  end         DateTime
+  status      String   @default("Agendado")
+  userId      String
+  studentId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  student     Student? @relation(fields: [studentId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Lead {
-  id              String   @id @default(cuid())
-  name            String
-  email           String?
-  phone           String?
-  status          String   @default("Novo") // Novo, Em Contato, Experimental, Convertido, Perdido
-  origin          String?  // Instagram, Indicação, Site, etc.
-  value           Float?   // Valor estimado do plano
-  notes           String?
-  
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  status    String   @default("Novo")
+  origin    String?
+  value     Float?
+  notes     String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

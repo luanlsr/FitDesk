@@ -81,89 +81,89 @@ export default function TreinosPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-8 animate-fade-up">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-4 md:p-8 space-y-8 animate-fade-up max-w-[1400px] mx-auto">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Dumbbell className="w-5 h-5 text-[#FF5C00]" />
             <h1 className="text-2xl font-bold text-[#F5F5F0]">Fichas de Treino</h1>
           </div>
-          <p className="text-[#7A7A85] text-sm">Crie e gerencie os treinos personalizados dos seus alunos.</p>
+          <p className="text-[#7A7A85] text-sm">Gerencie os treinos personalizados dos seus alunos.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-[#FF5C00] text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-[0_0_20px_rgba(255,92,0,0.2)] hover:bg-[#FF7A2E] transition-all flex items-center gap-2 cursor-pointer"
+          className="bg-[#FF5C00] text-white text-[0.75rem] font-bold px-6 py-4 md:py-3 rounded-2xl shadow-[0_0_20px_rgba(255,92,0,0.2)] hover:bg-[#FF7A2E] transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider"
         >
-          <Plus className="w-4 h-4" /> Nova Ficha
+          <Plus className="w-5 h-5 md:w-4 md:h-4" /> Nova Ficha
         </button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {isLoading ? (
           Array(2).fill(0).map((_, i) => (
-            <div key={i} className="h-64 bg-[#16161A] border border-[#222228] rounded-2xl animate-pulse" />
+            <div key={i} className="h-64 bg-[#16161A] border border-[#222228] rounded-3xl animate-pulse" />
           ))
         ) : workouts.length === 0 ? (
-          <div className="col-span-full py-20 text-center bg-[#111114] border border-[#222228] rounded-3xl">
+          <div className="col-span-full py-20 text-center bg-[#111114] border border-[#222228] rounded-[32px] shadow-inner">
             <Dumbbell className="w-12 h-12 text-[#222228] mx-auto mb-4" />
-            <p className="text-[#7A7A85]">Nenhuma ficha encontrada. Comece criando uma para um aluno.</p>
+            <p className="text-[#7A7A85] text-sm italic">Nenhuma ficha encontrada. Comece criando uma para um aluno.</p>
           </div>
         ) : (
           workouts.map((workout, i) => (
             <motion.div
               key={workout.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="bg-[#16161A] border border-[#222228] rounded-2xl overflow-hidden hover:border-[#FF5C00]/30 transition-all group"
+              className="bg-[#16161A] border border-[#222228] rounded-[32px] overflow-hidden hover:border-[#FF5C00]/30 transition-all group shadow-xl"
             >
-              <div className="p-6 border-b border-[#222228]/50 flex justify-between items-start bg-[#111114]/50">
+              <div className="p-5 md:p-6 border-b border-[#222228]/50 flex justify-between items-center bg-[#111114]/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#FF5C00]/10 rounded-2xl flex items-center justify-center text-[#FF5C00]">
+                  <div className="w-12 h-12 bg-[#FF5C00]/10 rounded-2xl flex items-center justify-center text-[#FF5C00] shrink-0">
                     <User className="w-6 h-6" />
                   </div>
-                  <div>
-                    <h3 className="text-[#F5F5F0] font-bold">{workout.student?.name}</h3>
-                    <div className="text-[0.65rem] text-[#FF5C00] font-bold uppercase tracking-widest">{workout.name}</div>
+                  <div className="min-w-0">
+                    <h3 className="text-[#F5F5F0] font-bold text-sm md:text-base truncate">{workout.student?.name}</h3>
+                    <div className="text-[0.6rem] text-[#FF5C00] font-bold uppercase tracking-widest truncate">{workout.name}</div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <button 
                     onClick={() => {
                       setSelectedWorkout(workout);
                       setIsAddExerciseOpen(true);
                     }}
-                    className="p-2 bg-[#0A0A0B] border border-[#222228] rounded-lg text-[#7A7A85] hover:text-[#FF5C00] transition-all cursor-pointer"
+                    className="p-3 bg-[#0A0A0B] border border-[#222228] rounded-xl text-[#7A7A85] hover:text-[#FF5C00] transition-all cursor-pointer shadow-sm active:scale-90"
                     title="Adicionar Exercício"
                   >
-                    <PlusCircle className="w-4 h-4" />
+                    <PlusCircle className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => handleDelete(workout.id)}
-                    className="p-2 bg-[#0A0A0B] border border-[#222228] rounded-lg text-[#7A7A85] hover:text-[#FF4444] transition-all cursor-pointer"
+                    className="p-3 bg-[#0A0A0B] border border-[#222228] rounded-xl text-[#7A7A85] hover:text-[#FF4444] transition-all cursor-pointer shadow-sm active:scale-90"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto no-scrollbar">
+              <div className="p-5 md:p-6 space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
                 {workout.exercises.length === 0 ? (
-                  <p className="text-[0.7rem] text-[#333338] italic">Nenhum exercício adicionado a esta ficha.</p>
+                  <p className="text-[0.7rem] text-[#333338] italic py-4 text-center">Nenhum exercício nesta ficha.</p>
                 ) : (
                   <div className="space-y-3">
                     {workout.exercises.map((ex: any) => (
-                      <div key={ex.id} className="flex items-center justify-between p-3 bg-[#0A0A0B] rounded-xl border border-[#222228] group-hover:border-[#FF5C00]/10 transition-all">
-                        <div className="flex items-center gap-3">
-                          <CheckCircle2 className="w-4 h-4 text-[#00E676]" />
-                          <div>
-                            <div className="text-sm font-semibold text-[#F5F5F0]">{ex.name}</div>
-                            <div className="text-[0.65rem] text-[#7A7A85] font-mono">
-                              {ex.sets}x {ex.reps} · {ex.weight || 'Sem carga'} · Descanso {ex.rest || 'N/I'}
+                      <div key={ex.id} className="flex items-center justify-between p-4 bg-[#0A0A0B] rounded-2xl border border-[#222228] hover:border-[#FF5C00]/20 transition-all">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <CheckCircle2 className="w-4 h-4 text-[#00E676] shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-bold text-[#F5F5F0] truncate">{ex.name}</div>
+                            <div className="text-[0.65rem] text-[#7A7A85] font-mono mt-0.5">
+                              {ex.sets}x {ex.reps} · {ex.weight || 'Sem carga'} · {ex.rest || 'N/I'}
                             </div>
                           </div>
                         </div>
-                        <MoreVertical className="w-4 h-4 text-[#333338]" />
+                        <MoreVertical className="w-4 h-4 text-[#333338] shrink-0" />
                       </div>
                     ))}
                   </div>

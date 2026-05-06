@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  BarChart3, 
-  Calendar, 
-  Users, 
-  Dumbbell, 
-  CircleDollarSign, 
-  UserPlus2, 
+import {
+  BarChart3,
+  Calendar,
+  Users,
+  Dumbbell,
+  CircleDollarSign,
+  UserPlus2,
   FileText,
   ChevronLeft,
   Settings,
@@ -16,16 +16,20 @@ import {
   MessageSquare,
   ShieldCheck,
   Building2,
-  Library
+  Library,
+  Menu,
+  X
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { data: session } = useSession();
-  
+
   const isMaster = session?.user?.role === "MASTER";
 
   const navItems = isMaster ? [
@@ -38,36 +42,51 @@ export default function DashboardSidebar() {
     { label: "Agenda", href: "/agenda", icon: <Calendar className="w-5 h-5" /> },
     { label: "Alunos", href: "/alunos", icon: <Users className="w-5 h-5" /> },
     { label: "Treinos", href: "/treinos", icon: <Dumbbell className="w-5 h-5" /> },
-    { label: "WhatsApp IA", href: "/whatsapp-ia", icon: <MessageSquare className="w-5 h-5" /> },
-    { label: "Financeiro", href: "/financeiro", icon: <CircleDollarSign className="w-5 h-5" /> },
-    { label: "Leads", href: "/leads", icon: <UserPlus2 className="w-5 h-5" /> },
     { label: "Biblioteca", href: "/biblioteca", icon: <Library className="w-5 h-5" /> },
+    { label: "Leads", href: "/leads", icon: <UserPlus2 className="w-5 h-5" /> },
+    { label: "Financeiro", href: "/financeiro", icon: <CircleDollarSign className="w-5 h-5" /> },
+    { label: "WhatsApp IA", href: "/whatsapp-ia", icon: <MessageSquare className="w-5 h-5" /> },
   ];
 
-  return (
-    <aside className={`h-screen bg-[#111114] border-r border-[#222228] transition-all duration-300 flex flex-col ${isCollapsed ? "w-20" : "w-64"}`}>
+  // Close mobile menu when pathname changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  const SidebarContent = ({ mobile = false }) => (
+    <div className="flex flex-col h-full bg-[#111114]">
       <div className="p-6 flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          {!isCollapsed && (
+          {(!isCollapsed || mobile) && (
             <div className="flex items-center gap-2 font-bebas text-2xl text-[#F5F5F0] tracking-[2px]">
               <img src="/favicon.png" alt="FitDesk Logo" className="w-8 h-8 rounded-lg" />
               <span>FIT<span className="text-[#FF5C00]">DESK</span></span>
             </div>
           )}
-          {isCollapsed && (
+          {isCollapsed && !mobile && (
             <div className="w-full flex justify-center">
               <img src="/favicon.png" alt="FitDesk Logo" className="w-8 h-8 rounded-lg" />
             </div>
           )}
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 hover:bg-[#16161A] rounded-md text-[#7A7A85] transition-colors"
-          >
-            <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
-          </button>
+          {!mobile && (
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1.5 hover:bg-[#16161A] rounded-md text-[#7A7A85] transition-colors"
+            >
+              <ChevronLeft className={`w-4 h-4 transition-transform ${isCollapsed ? "rotate-180" : ""}`} />
+            </button>
+          )}
+          {mobile && (
+             <button
+                onClick={() => setIsMobileOpen(false)}
+                className="p-2 text-[#7A7A85] hover:text-[#F5F5F0]"
+             >
+                <X className="w-6 h-6" />
+             </button>
+          )}
         </div>
 
-        {!isCollapsed && isMaster && (
+        {(!isCollapsed || mobile) && isMaster && (
           <div className="flex items-center gap-1.5 px-1 pb-2">
             <div className="bg-[#FF5C00]/10 border border-[#FF5C00]/30 rounded-full px-2 py-0.5 flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-[#FF5C00]" />
@@ -82,16 +101,15 @@ export default function DashboardSidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
-              pathname === item.href
-                ? "bg-[#FF5C00]/10 text-[#FF5C00] border border-[#FF5C00]/20"
-                : "text-[#7A7A85] hover:text-[#F5F5F0] hover:bg-[#16161A]"
-            }`}
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${pathname === item.href
+              ? "bg-[#FF5C00]/10 text-[#FF5C00] border border-[#FF5C00]/20"
+              : "text-[#7A7A85] hover:text-[#F5F5F0] hover:bg-[#16161A]"
+              }`}
           >
             <div className={`flex-shrink-0 ${pathname === item.href ? "text-[#FF5C00]" : "group-hover:text-[#F5F5F0]"}`}>
               {item.icon}
             </div>
-            {!isCollapsed && <span className="text-[0.875rem] font-medium">{item.label}</span>}
+            {(!isCollapsed || mobile) && <span className="text-[0.875rem] font-medium">{item.label}</span>}
           </Link>
         ))}
       </nav>
@@ -102,16 +120,63 @@ export default function DashboardSidebar() {
           className="flex items-center gap-3 px-3 py-3 rounded-xl text-[#7A7A85] hover:text-[#F5F5F0] hover:bg-[#16161A] transition-all group"
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
-          {!isCollapsed && <span className="text-[0.875rem] font-medium">Configurações</span>}
+          {(!isCollapsed || mobile) && <span className="text-[0.875rem] font-medium">Configurações</span>}
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-3 px-3 py-3 rounded-xl text-[#7A7A85] hover:text-[#FF4444] hover:bg-[#FF4444]/5 transition-all group w-full text-left cursor-pointer"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
-          {!isCollapsed && <span className="text-[0.875rem] font-medium">Sair</span>}
+          {(!isCollapsed || mobile) && <span className="text-[0.875rem] font-medium">Sair</span>}
         </button>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#111114] border-b border-[#222228] flex items-center justify-between px-6 z-40">
+        <div className="flex items-center gap-2 font-bebas text-xl text-[#F5F5F0] tracking-[2px]">
+          <img src="/favicon.png" alt="FitDesk Logo" className="w-6 h-6 rounded-lg" />
+          <span>FIT<span className="text-[#FF5C00]">DESK</span></span>
+        </div>
+        <button 
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 text-[#7A7A85] hover:text-[#F5F5F0]"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className={`hidden md:flex h-screen bg-[#111114] border-r border-[#222228] transition-all duration-300 flex-col ${isCollapsed ? "w-20" : "w-64"}`}>
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-[280px] bg-[#111114] z-[60] md:hidden border-r border-[#222228]"
+            >
+              <SidebarContent mobile />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
