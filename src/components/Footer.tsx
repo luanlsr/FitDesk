@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0A0A0B] border-t border-[#222228] py-12 px-[5%] flex flex-wrap justify-between items-center gap-6">
+    <footer className="bg-[#0A0A0B] border-t border-[#222228] py-12 px-[5%] flex flex-col md:flex-row items-center md:justify-between gap-8 md:gap-6 text-center md:text-left">
       <div className="font-bebas text-2xl text-[#F5F5F0] tracking-[2px]">
         FIT<span className="text-[#FF5C00]">DESK</span>
       </div>
-      <div className="text-[0.8rem] text-[#7A7A85] font-light italic">
+      <div className="text-[0.8rem] text-[#7A7A85] font-light italic order-3 md:order-2">
         © 2026 FitDesk. Inteligência para o seu negócio de personal.
       </div>
-      <div className="flex gap-6">
+      <div className="flex gap-6 order-2 md:order-3">
         <Link href="/termos" className="text-[0.8rem] text-[#7A7A85] no-underline hover:text-white transition-colors">Termos de Uso</Link>
         <Link href="/privacidade" className="text-[0.8rem] text-[#7A7A85] no-underline hover:text-white transition-colors">Privacidade</Link>
         <Link href="/suporte" className="text-[0.8rem] text-[#7A7A85] no-underline hover:text-white transition-colors">Suporte</Link>

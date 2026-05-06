@@ -18,25 +18,26 @@ export default function Hero() {
       </div>
 
       <h1 className="anim-fade-up anim-d2 font-bebas text-[clamp(2.5rem,8vw,7rem)] leading-[0.95] text-[#F5F5F0] tracking-[1px] relative mb-4">
-        Gerencie sua<br />
-        <span className="text-[#FF5C00]">academia pessoal</span><br />
-        como um CEO
+        Gerencie sua carreira de<br />
+        <span className="text-[#FF5C00]">personal trainer</span><br />
+        com excelência
       </h1>
 
       <p className="anim-fade-up anim-d3 text-[clamp(1rem,2vw,1.2rem)] text-[#7A7A85] max-w-[580px] mx-auto mb-10 font-light">
         Agendamentos automáticos via WhatsApp, fichas de treino digitais, controle financeiro e relatórios inteligentes. Tudo que um personal precisa em um único dashboard.
       </p>
 
-      <div className="anim-fade-up anim-d4 flex gap-4 flex-wrap justify-center mb-16">
+      <div className="anim-fade-up anim-d4 flex flex-col sm:flex-row gap-4 items-center justify-center mb-16 w-full max-w-[400px] sm:max-w-none px-4 sm:px-0">
         <button
           onClick={() => scrollTo("precos")}
-          className="bg-[#FF5C00] text-white px-9 py-3.5 rounded-lg text-base font-bold transition-all shadow-[0_0_30px_rgba(255,92,0,0.35)] hover:bg-[#FF7A2E] hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(255,92,0,0.5)] cursor-pointer"
+          className="w-full sm:w-auto bg-[#FF5C00] text-white px-8 sm:px-9 py-3.5 rounded-lg text-sm sm:text-base font-bold transition-all shadow-[0_0_30px_rgba(255,92,0,0.35)] hover:bg-[#FF7A2E] hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(255,92,0,0.5)] cursor-pointer"
         >
-          Teste grátis por 14 dias
+          <span className="sm:hidden">Começar agora →</span>
+          <span className="hidden sm:inline">Teste grátis por 14 dias</span>
         </button>
         <Link
           href="/funcionalidades"
-          className="border border-[#222228] text-[#CFCFC8] px-9 py-3.5 rounded-lg text-base font-medium no-underline transition-all hover:border-[#FF5C00]/50 hover:text-[#F5F5F0] hover:bg-[#FF5C00]/5"
+          className="w-full sm:w-auto border border-[#222228] text-[#CFCFC8] px-8 sm:px-9 py-3.5 rounded-lg text-sm sm:text-base font-medium no-underline transition-all hover:border-[#FF5C00]/50 hover:text-[#F5F5F0] hover:bg-[#FF5C00]/5 text-center"
         >
           Ver funcionalidades →
         </Link>
