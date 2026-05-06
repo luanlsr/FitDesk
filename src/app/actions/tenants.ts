@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { auth } from "@/auth";
 import { userService } from "@/services/userService";
@@ -19,7 +19,7 @@ export async function getTenants() {
 
 export async function createTenant(formData: FormData) {
   const session = await auth();
-  if (session?.user?.role !== "MASTER") return { success: false, error: "Não autorizado" };
+  if (session?.user?.role !== "MASTER") return { success: false, error: "NÃ£o autorizado" };
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -29,7 +29,7 @@ export async function createTenant(formData: FormData) {
     const existingUser = await userService.getByEmail(email);
 
     if (existingUser) {
-      return { success: false, error: "Este e-mail já está cadastrado." };
+      return { success: false, error: "Este e-mail jÃ¡ estÃ¡ cadastrado." };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -41,10 +41,11 @@ export async function createTenant(formData: FormData) {
       role: "PERSONAL",
     });
 
-    revalidatePath("/dashboard/tenants");
+    revalidatePath("/tenants");
     return { success: true };
   } catch (error) {
     console.error("Error creating tenant:", error);
     return { success: false, error: "Falha ao criar profissional" };
   }
 }
+

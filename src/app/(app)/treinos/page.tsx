@@ -19,11 +19,13 @@ import {
 import { useState, useEffect } from "react";
 import { getWorkouts, createWorkout, addExerciseToWorkout, deleteWorkout } from "@/app/actions/workouts";
 import { getStudents } from "@/app/actions/students";
+import { getLibraryExercises } from "@/app/actions/library";
 import ModalPortal from "@/components/ModalPortal";
 
 export default function TreinosPage() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [libraryExercises, setLibraryExercises] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
@@ -31,9 +33,14 @@ export default function TreinosPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    const [wData, sData] = await Promise.all([getWorkouts(), getStudents()]);
+    const [wData, sData, lData] = await Promise.all([
+      getWorkouts(), 
+      getStudents(),
+      getLibraryExercises()
+    ]);
     setWorkouts(wData);
     setStudents(sData);
+    setLibraryExercises(lData);
     setIsLoading(false);
   };
 
@@ -59,7 +66,7 @@ export default function TreinosPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
-      name: formData.get("name") as string,
+      exerciseId: formData.get("exerciseId") as string,
       sets: parseInt(formData.get("sets") as string),
       reps: formData.get("reps") as string,
       weight: formData.get("weight") as string,
@@ -157,7 +164,7 @@ export default function TreinosPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <CheckCircle2 className="w-4 h-4 text-[#00E676] shrink-0" />
                           <div className="min-w-0">
-                            <div className="text-sm font-bold text-[#F5F5F0] truncate">{ex.name}</div>
+                            <div className="text-sm font-bold text-[#F5F5F0] truncate">{ex.exercise?.name}</div>
                             <div className="text-[0.65rem] text-[#7A7A85] font-mono mt-0.5">
                               {ex.sets}x {ex.reps} · {ex.weight || 'Sem carga'} · {ex.rest || 'N/I'}
                             </div>
@@ -248,10 +255,22 @@ export default function TreinosPage() {
                   <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                       <div className="space-y-5">
                           <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Nome do Exercício</label>
+                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Exercício da Biblioteca</label>
                               <div className="relative">
                                   <Dumbbell className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
-                                  <input name="name" required className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: Agachamento Livre" />
+                                  <select 
+                                    name="exerciseId" 
+                                    required 
+                                    className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none"
+                                  >
+                                    <option value="">Selecione um exercício...</option>
+                                    {libraryExercises.map((ex) => (
+                                      <option key={ex.id} value={ex.id}>
+                                        {ex.name} ({ex.category})
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronRight className="w-4 h-4 text-[#7A7A85] absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
                               </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4">

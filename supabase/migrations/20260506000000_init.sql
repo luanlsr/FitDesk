@@ -117,6 +117,18 @@ CREATE TABLE workouts (
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
+-- 4. Itens de Treino (Relação Treino x Exercício)
+CREATE TABLE workout_items (
+  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "workoutId" uuid NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+  "exerciseId" uuid NOT NULL REFERENCES library_exercises(id) ON DELETE CASCADE,
+  sets integer NOT NULL,
+  reps text NOT NULL,
+  weight text,
+  rest text,
+  "createdAt" timestamp with time zone DEFAULT now()
+);
+
 -- Habilitar RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_groups ENABLE ROW LEVEL SECURITY;
@@ -126,6 +138,7 @@ ALTER TABLE financial_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE library_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_items ENABLE ROW LEVEL SECURITY;
 
 -- Políticas
 CREATE POLICY "Users access own profile" ON users FOR SELECT USING (auth.uid() = id);
@@ -136,6 +149,13 @@ CREATE POLICY "Financial access" ON financial_entries FOR ALL USING (auth.uid() 
 CREATE POLICY "Leads access" ON leads FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Workouts access" ON workouts FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Exercises access" ON library_exercises FOR ALL USING (auth.uid() = "personalId" OR "personalId" IS NULL);
+CREATE POLICY "Workout items access" ON workout_items FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM workouts 
+    WHERE workouts.id = workout_items."workoutId" 
+    AND workouts."personalId" = auth.uid()
+  )
+);
 
 -- SEED
 INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)

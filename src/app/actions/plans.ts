@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { auth } from "@/auth";
 import { studentService } from "@/services/studentService";
@@ -14,10 +14,11 @@ export async function updateStudentPlan(formData: FormData) {
 
   try {
     await studentService.update(id, session.user.id, { planValue, paymentDay });
-    revalidatePath("/dashboard/financeiro");
+    revalidatePath("/financeiro");
     return { success: true };
   } catch (error) {
     console.error("Error updating plan:", error);
     return { success: false };
   }
 }
+

@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { auth } from "@/auth";
 import { leadService } from "@/services/leadService";
@@ -18,7 +18,7 @@ export async function getLeads() {
 
 export async function createLead(formData: FormData) {
   const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
+  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -35,7 +35,7 @@ export async function createLead(formData: FormData) {
       value,
       personalId: session.user.id,
     });
-    revalidatePath("/dashboard/leads");
+    revalidatePath("/leads");
     return { success: true };
   } catch (error) {
     console.error("Error creating lead:", error);
@@ -45,11 +45,11 @@ export async function createLead(formData: FormData) {
 
 export async function updateLeadStatus(id: string, status: string) {
   const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
+  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
 
   try {
     await leadService.update(id, session.user.id, { status });
-    revalidatePath("/dashboard/leads");
+    revalidatePath("/leads");
     return { success: true };
   } catch (error) {
     console.error("Error updating lead status:", error);
@@ -59,14 +59,15 @@ export async function updateLeadStatus(id: string, status: string) {
 
 export async function deleteLead(id: string) {
   const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
+  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
 
   try {
     await leadService.delete(id, session.user.id);
-    revalidatePath("/dashboard/leads");
+    revalidatePath("/leads");
     return { success: true };
   } catch (error) {
     console.error("Error deleting lead:", error);
     return { success: false, error: "Falha ao remover lead" };
   }
 }
+

@@ -4,7 +4,7 @@ export const workoutService = {
   async getAll(personalId: string, studentId?: string) {
     let query = supabaseAdmin
       .from("workouts")
-      .select("*, student:students(name), exercises:workout_items(*)")
+      .select("*, student:students(name), exercises:workout_items(*, exercise:library_exercises(name))")
       .eq("personalId", personalId)
       .order("createdAt", { ascending: false });
 

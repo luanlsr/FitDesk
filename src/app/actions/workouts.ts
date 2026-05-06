@@ -27,7 +27,7 @@ export async function createWorkout(studentId: string, name: string, description
       studentId,
       personalId: session.user.id,
     });
-    revalidatePath("/dashboard/treinos");
+    revalidatePath("/treinos");
     return { success: true, workoutId: workout.id };
   } catch (error) {
     console.error("Error creating workout:", error);
@@ -47,7 +47,7 @@ export async function addExerciseToWorkout(workoutId: string, data: {
 
   try {
     await workoutService.addExercise(workoutId, data);
-    revalidatePath("/dashboard/treinos");
+    revalidatePath("/treinos");
     return { success: true };
   } catch (error) {
     console.error("Error adding exercise:", error);
@@ -61,7 +61,7 @@ export async function deleteWorkout(id: string) {
 
   try {
     await workoutService.delete(id, session.user.id);
-    revalidatePath("/dashboard/treinos");
+    revalidatePath("/treinos");
     return { success: true };
   } catch (error) {
     console.error("Error deleting workout:", error);
