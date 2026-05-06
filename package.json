@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && npx tsx scratch/seed_michel.ts && next build",
+    "build": "DATABASE_URL=file:./dev.db prisma generate && DATABASE_URL=file:./dev.db prisma db push --accept-data-loss && DATABASE_URL=file:./dev.db npx tsx scratch/seed_michel.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
