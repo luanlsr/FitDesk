@@ -38,6 +38,10 @@ export async function createAppointment(formData: FormData) {
   const end = new Date(formData.get("end") as string);
   const studentId = formData.get("studentId") as string || null;
 
+  if (start < new Date()) {
+    return { success: false, error: "Não é possível agendar em datas passadas" };
+  }
+
   try {
     await prisma.appointment.create({
       data: {
@@ -71,6 +75,35 @@ export async function updateAppointmentStatus(id: string, status: string) {
   } catch (error) {
     console.error("Error updating appointment:", error);
     return { success: false, error: "Falha ao atualizar status" };
+  }
+}
+
+export async function updateAppointment(id: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
+
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+  const start = new Date(formData.get("start") as string);
+  const end = new Date(formData.get("end") as string);
+  const studentId = formData.get("studentId") as string || null;
+
+  try {
+    await prisma.appointment.update({
+      where: { id, userId: session.user.id },
+      data: {
+        title,
+        description,
+        start,
+        end,
+        studentId: studentId === "block" ? null : studentId,
+      },
+    });
+    revalidatePath("/dashboard/agenda");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    return { success: false, error: "Falha ao atualizar agendamento" };
   }
 }
 
