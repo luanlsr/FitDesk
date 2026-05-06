@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { userService } from "@/services/userService";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
@@ -10,15 +10,7 @@ export async function getTenants() {
   if (session?.user?.role !== "MASTER") return [];
 
   try {
-    return await prisma.user.findMany({
-      where: { role: "PERSONAL" },
-      orderBy: { createdAt: "desc" },
-      include: { 
-        _count: {
-          select: { students: true }
-        }
-      }
-    });
+    return await userService.getAllPersonals();
   } catch (error) {
     console.error("Error fetching tenants:", error);
     return [];
@@ -34,9 +26,7 @@ export async function createTenant(formData: FormData) {
   const password = formData.get("password") as string;
 
   try {
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await userService.getByEmail(email);
 
     if (existingUser) {
       return { success: false, error: "Este e-mail já está cadastrado." };
@@ -44,13 +34,11 @@ export async function createTenant(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: "PERSONAL",
-      },
+    await userService.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "PERSONAL",
     });
 
     revalidatePath("/dashboard/tenants");

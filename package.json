@@ -4,14 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "DATABASE_URL=file:./dev.db prisma generate && DATABASE_URL=file:./dev.db prisma db push --accept-data-loss && DATABASE_URL=file:./dev.db npx tsx scratch/seed_michel.ts && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "prisma generate"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.11.1",
-    "@prisma/client": "^5.22.0",
+    "@auth/supabase-adapter": "^1.11.2",
+    "@supabase/supabase-js": "^2.105.3",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -19,7 +18,6 @@
     "lucide-react": "^0.577.0",
     "next": "16.2.1",
     "next-auth": "^5.0.0-beta.30",
-    "prisma": "^5.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.0",

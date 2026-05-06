@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { studentService } from "@/services/studentService";
 import { revalidatePath } from "next/cache";
 
 export async function updateStudentPlan(formData: FormData) {
@@ -13,10 +13,7 @@ export async function updateStudentPlan(formData: FormData) {
   const paymentDay = parseInt(formData.get("paymentDay") as string);
 
   try {
-    await prisma.student.update({
-      where: { id },
-      data: { planValue, paymentDay }
-    });
+    await studentService.update(id, session.user.id, { planValue, paymentDay });
     revalidatePath("/dashboard/financeiro");
     return { success: true };
   } catch (error) {

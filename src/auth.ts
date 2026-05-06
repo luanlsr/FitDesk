@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import prisma from "@/lib/prisma";
+import { SupabaseAdapter } from "@auth/supabase-adapter";
+import { userService } from "@/services/userService";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -8,7 +8,11 @@ import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma) as any,
+  secret: process.env.AUTH_SECRET || "FitDeskSecretToken2026!",
+  adapter: SupabaseAdapter({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  }) as any,
   session: { strategy: "jwt" },
   providers: [
     Google({
@@ -20,9 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { email, password } = credentials;
         console.log("Tentativa de login para:", email);
 
-        const user = await prisma.user.findUnique({
-          where: { email: email as string },
-        });
+        const user = await userService.getByEmail(email as string);
 
         console.log("Usuário encontrado:", !!user);
 
@@ -36,7 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log("Senha válida:", passwordMatch);
 
         if (passwordMatch) return user;
-        
+
         return null;
       },
     }),
@@ -54,9 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token }) {
       if (!token.sub) return token;
 
-      const existingUser = await prisma.user.findUnique({
-        where: { id: token.sub },
-      });
+      const existingUser = await userService.getById(token.sub);
 
       if (!existingUser) return token;
 

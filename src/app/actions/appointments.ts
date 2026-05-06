@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { appointmentService } from "@/services/appointmentService";
 import { revalidatePath } from "next/cache";
 
 export async function getAppointments(start: Date, end: Date) {
@@ -9,19 +9,7 @@ export async function getAppointments(start: Date, end: Date) {
   if (!session?.user?.id) return [];
 
   try {
-    return await prisma.appointment.findMany({
-      where: {
-        userId: session.user.id,
-        start: { gte: start },
-        end: { lte: end },
-      },
-      include: {
-        student: {
-          select: { name: true, phone: true }
-        }
-      },
-      orderBy: { start: "asc" },
-    });
+    return await appointmentService.getByRange(session.user.id, start, end);
   } catch (error) {
     console.error("Error fetching appointments:", error);
     return [];
@@ -34,47 +22,25 @@ export async function createAppointment(formData: FormData) {
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
+  const studentId = formData.get("studentId") as string;
   const start = new Date(formData.get("start") as string);
   const end = new Date(formData.get("end") as string);
-  const studentId = formData.get("studentId") as string || null;
-
-  if (start < new Date()) {
-    return { success: false, error: "Não é possível agendar em datas passadas" };
-  }
 
   try {
-    await prisma.appointment.create({
-      data: {
-        title,
-        description,
-        start,
-        end,
-        userId: session.user.id,
-        studentId: studentId === "block" ? null : studentId,
-      },
+    await appointmentService.create({
+      title,
+      description,
+      studentId: studentId === "none" ? null : studentId,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      personalId: session.user.id,
     });
-    revalidatePath("/dashboard/agenda");
+    
+    revalidatePath("/agenda");
     return { success: true };
   } catch (error) {
     console.error("Error creating appointment:", error);
-    return { success: false, error: "Falha ao agendar" };
-  }
-}
-
-export async function updateAppointmentStatus(id: string, status: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  try {
-    await prisma.appointment.update({
-      where: { id, userId: session.user.id },
-      data: { status },
-    });
-    revalidatePath("/dashboard/agenda");
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating appointment:", error);
-    return { success: false, error: "Falha ao atualizar status" };
+    return { success: false, error: "Falha ao criar agendamento" };
   }
 }
 
@@ -84,22 +50,16 @@ export async function updateAppointment(id: string, formData: FormData) {
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
-  const start = new Date(formData.get("start") as string);
-  const end = new Date(formData.get("end") as string);
-  const studentId = formData.get("studentId") as string || null;
+  const status = formData.get("status") as string;
 
   try {
-    await prisma.appointment.update({
-      where: { id, userId: session.user.id },
-      data: {
-        title,
-        description,
-        start,
-        end,
-        studentId: studentId === "block" ? null : studentId,
-      },
+    await appointmentService.update(id, session.user.id, {
+      title,
+      description,
+      status,
     });
-    revalidatePath("/dashboard/agenda");
+    
+    revalidatePath("/agenda");
     return { success: true };
   } catch (error) {
     console.error("Error updating appointment:", error);
@@ -112,10 +72,8 @@ export async function deleteAppointment(id: string) {
   if (!session?.user?.id) return { success: false, error: "Não autorizado" };
 
   try {
-    await prisma.appointment.delete({
-      where: { id, userId: session.user.id },
-    });
-    revalidatePath("/dashboard/agenda");
+    await appointmentService.delete(id, session.user.id);
+    revalidatePath("/agenda");
     return { success: true };
   } catch (error) {
     console.error("Error deleting appointment:", error);

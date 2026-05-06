@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { workoutService } from "@/services/workoutService";
 import { revalidatePath } from "next/cache";
 
 export async function getWorkouts(studentId?: string) {
@@ -9,17 +9,7 @@ export async function getWorkouts(studentId?: string) {
   if (!session?.user?.id) return [];
 
   try {
-    const where: any = { userId: session.user.id };
-    if (studentId) where.studentId = studentId;
-
-    return await prisma.workout.findMany({
-      where,
-      include: {
-        exercises: true,
-        student: { select: { name: true } }
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    return await workoutService.getAll(session.user.id, studentId);
   } catch (error) {
     console.error("Error fetching workouts:", error);
     return [];
@@ -31,13 +21,11 @@ export async function createWorkout(studentId: string, name: string, description
   if (!session?.user?.id) return { success: false, error: "Não autorizado" };
 
   try {
-    const workout = await prisma.workout.create({
-      data: {
-        name,
-        description,
-        studentId,
-        userId: session.user.id,
-      },
+    const workout = await workoutService.create({
+      name,
+      description,
+      studentId,
+      personalId: session.user.id,
     });
     revalidatePath("/dashboard/treinos");
     return { success: true, workoutId: workout.id };
@@ -48,7 +36,7 @@ export async function createWorkout(studentId: string, name: string, description
 }
 
 export async function addExerciseToWorkout(workoutId: string, data: {
-  name: string;
+  exerciseId: string;
   sets: number;
   reps: string;
   weight?: string;
@@ -58,19 +46,7 @@ export async function addExerciseToWorkout(workoutId: string, data: {
   if (!session?.user?.id) return { success: false, error: "Não autorizado" };
 
   try {
-    // Verificar se o workout pertence ao usuário
-    const workout = await prisma.workout.findUnique({
-      where: { id: workoutId, userId: session.user.id }
-    });
-
-    if (!workout) return { success: false, error: "Treino não encontrado" };
-
-    await prisma.exercise.create({
-      data: {
-        ...data,
-        workoutId,
-      },
-    });
+    await workoutService.addExercise(workoutId, data);
     revalidatePath("/dashboard/treinos");
     return { success: true };
   } catch (error) {
@@ -84,9 +60,7 @@ export async function deleteWorkout(id: string) {
   if (!session?.user?.id) return { success: false, error: "Não autorizado" };
 
   try {
-    await prisma.workout.delete({
-      where: { id, userId: session.user.id },
-    });
+    await workoutService.delete(id, session.user.id);
     revalidatePath("/dashboard/treinos");
     return { success: true };
   } catch (error) {

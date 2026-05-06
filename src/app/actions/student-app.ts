@@ -1,19 +1,14 @@
 "use server";
 
 import { auth } from "@/auth";
-import prisma from "@/lib/prisma";
+import { studentAppService } from "@/services/studentAppService";
 
 export async function getMyStudentProfile() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
   try {
-    return await prisma.student.findUnique({
-      where: { associatedUserId: session.user.id },
-      include: {
-        user: { select: { name: true, image: true } }, // Personal Trainer info
-      }
-    });
+    return await studentAppService.getProfile(session.user.id);
   } catch (error) {
     console.error("Error fetching student profile:", error);
     return null;
@@ -25,18 +20,10 @@ export async function getMyWorkouts() {
   if (!session?.user?.id) return [];
 
   try {
-    const student = await prisma.student.findUnique({
-      where: { associatedUserId: session.user.id },
-      select: { id: true }
-    });
+    const profile = await studentAppService.getProfile(session.user.id);
+    if (!profile) return [];
 
-    if (!student) return [];
-
-    return await prisma.workout.findMany({
-      where: { studentId: student.id },
-      include: { exercises: true },
-      orderBy: { createdAt: "desc" }
-    });
+    return await studentAppService.getWorkouts(profile.id);
   } catch (error) {
     console.error("Error fetching student workouts:", error);
     return [];
@@ -48,21 +35,10 @@ export async function getMyNextAppointment() {
   if (!session?.user?.id) return null;
 
   try {
-    const student = await prisma.student.findUnique({
-      where: { associatedUserId: session.user.id },
-      select: { id: true }
-    });
+    const profile = await studentAppService.getProfile(session.user.id);
+    if (!profile) return null;
 
-    if (!student) return null;
-
-    return await prisma.appointment.findFirst({
-      where: { 
-        studentId: student.id,
-        start: { gte: new Date() },
-        status: "Agendado"
-      },
-      orderBy: { start: "asc" }
-    });
+    return await studentAppService.getNextAppointment(profile.id);
   } catch (error) {
     console.error("Error fetching next appointment:", error);
     return null;
