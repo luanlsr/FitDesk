@@ -19,7 +19,19 @@ async function main() {
 
   console.log("Usando banco em:", dbPath);
 
-  // 1. Criar/Atualizar Usuário Michel
+  // 1. Criar/Atualizar Usuário Michel e Admin
+  const adminPassword = await bcrypt.hash("master123", 10);
+  await prisma.user.upsert({
+    where: { email: "admin@fitdesk.com.br" },
+    update: { password: adminPassword },
+    create: {
+      email: "admin@fitdesk.com.br",
+      name: "Admin FitDesk",
+      password: adminPassword,
+      role: "PERSONAL",
+    },
+  });
+
   const user = await prisma.user.upsert({
     where: { email },
     update: { password: hashedPassword },
