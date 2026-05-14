@@ -6,7 +6,7 @@ import { userService } from "@/services/userService";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  secret: process.env.AUTH_SECRET || "FitDeskSecretToken2026!",
+  secret: process.env.AUTH_SECRET || "FitDeskSecretToken2026-SuperSecure!",
   session: { 
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days persistent session
