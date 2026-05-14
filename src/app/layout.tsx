@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Sora, Space_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
@@ -20,11 +20,26 @@ const spaceMono = Space_Mono({
   variable: "--font-space-mono",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0A0A0B",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: "FitDesk — Gestão Inteligente para Personal Trainers",
   description: "Gerencie sua academia pessoal como um CEO com agendamentos automáticos, fichas digitais e controle financeiro.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "FitDesk",
+  },
   icons: {
     icon: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 

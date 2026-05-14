@@ -254,48 +254,114 @@ export default function TreinosPage() {
                   {/* Body com Rolagem */}
                   <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                       <div className="space-y-5">
+                          {/* Busca de Exercício Personalizada */}
                           <div className="space-y-2">
                               <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Exercício da Biblioteca</label>
-                              <div className="relative">
-                                  <Dumbbell className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
-                                  <select 
-                                    name="exerciseId" 
-                                    required 
-                                    className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none"
-                                  >
-                                    <option value="">Selecione um exercício...</option>
-                                    {libraryExercises.map((ex) => (
-                                      <option key={ex.id} value={ex.id}>
-                                        {ex.name} ({ex.category})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <ChevronRight className="w-4 h-4 text-[#7A7A85] absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
+                              <div className="relative group">
+                                  <div className="absolute left-4 top-4 z-10">
+                                      <Search className="w-4 h-4 text-[#333338]" />
+                                  </div>
+                                  <input 
+                                    type="text"
+                                    placeholder="Pesquisar exercício..."
+                                    className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3.5 rounded-t-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] transition-colors"
+                                    onChange={(e) => {
+                                        const term = e.target.value.toLowerCase();
+                                        const filtered = libraryExercises.filter(ex => 
+                                            ex.name.toLowerCase().includes(term) || 
+                                            ex.category.toLowerCase().includes(term)
+                                        );
+                                        (window as any)._filteredExercises = filtered;
+                                        const list = document.getElementById('exercise-list');
+                                        if (list) {
+                                            list.innerHTML = filtered.map(ex => `
+                                                <div onclick="document.getElementById('exerciseId').value='${ex.id}'; document.getElementById('exercise-display').innerText='${ex.name}'; document.getElementById('exercise-list').classList.add('hidden')" class="p-3 hover:bg-[#FF5C00]/10 cursor-pointer text-sm text-[#CFCFC8] border-b border-[#222228]/50 last:border-0 flex justify-between items-center">
+                                                    <span>${ex.name}</span>
+                                                    <span class="text-[0.6rem] uppercase font-bold text-[#7A7A85]">${ex.category}</span>
+                                                </div>
+                                            `).join('') || '<div class="p-4 text-center text-xs text-[#7A7A85]">Nenhum exercício encontrado</div>';
+                                        }
+                                        document.getElementById('exercise-list')?.classList.remove('hidden');
+                                    }}
+                                    onFocus={() => document.getElementById('exercise-list')?.classList.remove('hidden')}
+                                  />
+                                  <input type="hidden" name="exerciseId" id="exerciseId" required />
+                                  
+                                  <div id="exercise-list" className="absolute left-0 right-0 top-full bg-[#0D0D0F] border-x border-b border-[#222228] rounded-b-xl max-h-[200px] overflow-y-auto z-50 hidden custom-scrollbar shadow-2xl">
+                                      {libraryExercises.map((ex) => (
+                                          <div 
+                                            key={ex.id}
+                                            onClick={() => {
+                                                (document.getElementById('exerciseId') as HTMLInputElement).value = ex.id;
+                                                (document.getElementById('exercise-display') as HTMLElement).innerText = ex.name;
+                                                document.getElementById('exercise-list')?.classList.add('hidden');
+                                            }}
+                                            className="p-3 hover:bg-[#FF5C00]/10 cursor-pointer text-sm text-[#CFCFC8] border-b border-[#222228]/50 last:border-0 flex justify-between items-center"
+                                          >
+                                              <span>{ex.name}</span>
+                                              <span className="text-[0.6rem] uppercase font-bold text-[#7A7A85]">{ex.category}</span>
+                                          </div>
+                                      ))}
+                                  </div>
                               </div>
+                              <div id="exercise-display" className="text-[0.7rem] font-bold text-[#FF5C00] uppercase tracking-wider mt-1 ml-1 min-h-[1rem]">Nenhum selecionado</div>
                           </div>
+
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Séries</label>
                                   <div className="relative">
                                       <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
-                                      <input name="sets" type="number" required defaultValue={3} className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" />
+                                      <select name="sets" required className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3.5 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none cursor-pointer">
+                                          {[...Array(10)].map((_, i) => (
+                                              <option key={i+1} value={i+1}>{i+1} Séries</option>
+                                          ))}
+                                      </select>
+                                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85] rotate-90 pointer-events-none" />
                                   </div>
                               </div>
                               <div className="space-y-2">
                                   <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Repetições</label>
-                                  <input name="reps" required className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: 8 a 12" />
+                                  <div className="relative">
+                                      <select name="reps" required className="w-full bg-[#0A0A0B] border border-[#222228] px-4 py-3.5 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none cursor-pointer">
+                                          {[...Array(25)].map((_, i) => (
+                                              <option key={i+1} value={i+1}>{i+1} Repetições</option>
+                                          ))}
+                                          <option value="Até a falha">Até a falha</option>
+                                      </select>
+                                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85] rotate-90 pointer-events-none" />
+                                  </div>
                               </div>
                           </div>
+
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Carga/Peso</label>
-                                  <input name="weight" className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: 20kg cada lado" />
+                                  <div className="relative">
+                                      <select name="weight" className="w-full bg-[#0A0A0B] border border-[#222228] px-4 py-3.5 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none cursor-pointer">
+                                          <option value="Peso do Corpo">Peso do Corpo</option>
+                                          {[...Array(200)].map((_, i) => (
+                                              <option key={i+1} value={`${i+1}kg`}>{i+1} kg</option>
+                                          ))}
+                                      </select>
+                                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85] rotate-90 pointer-events-none" />
+                                  </div>
                               </div>
                               <div className="space-y-2">
                                   <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Descanso</label>
                                   <div className="relative">
                                       <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
-                                      <input name="rest" className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: 60s" />
+                                      <select name="rest" className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3.5 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] appearance-none cursor-pointer">
+                                          <option value="30s">30 segundos</option>
+                                          <option value="45s">45 segundos</option>
+                                          <option value="1min">1 minuto</option>
+                                          <option value="1min 15s">1:15 min</option>
+                                          <option value="1min 30s">1:30 min</option>
+                                          <option value="2min">2 minutos</option>
+                                          <option value="3min">3 minutos</option>
+                                          <option value="5min">5 minutos</option>
+                                      </select>
+                                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85] rotate-90 pointer-events-none" />
                                   </div>
                               </div>
                           </div>

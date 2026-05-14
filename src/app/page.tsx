@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Mockup from "@/components/Mockup";
@@ -12,8 +13,19 @@ import Pricing from "@/components/Pricing";
 import Footer from "@/components/Footer";
 
 export default function LandingPage() {
+  const router = useRouter();
   // Scroll para seção via ?scrollTo= ou volta ao topo por padrão
   useEffect(() => {
+    // Se estiver no modo PWA (instalado), redireciona direto para o login
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone 
+      || document.referrer.includes('android-app://');
+
+    if (isStandalone) {
+      router.push("/login");
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const target = params.get("scrollTo");
     if (target) {
@@ -28,7 +40,7 @@ export default function LandingPage() {
     } else {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
-  }, []);
+  }, [router]);
 
   return (
     <main className="min-h-screen relative overflow-x-hidden">

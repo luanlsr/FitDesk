@@ -135,48 +135,18 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile Top Bar */}
+      {/* Mobile Top Bar (Branding Only) */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#111114] border-b border-[#222228] flex items-center justify-between px-6 z-40">
         <div className="flex items-center gap-2 font-bebas text-xl text-[#F5F5F0] tracking-[2px]">
           <img src="/favicon.png" alt="FitDesk Logo" className="w-6 h-6 rounded-lg" />
           <span>FIT<span className="text-[#FF5C00]">DESK</span></span>
         </div>
-        <button 
-          onClick={() => setIsMobileOpen(true)}
-          className="p-2 text-[#7A7A85] hover:text-[#F5F5F0]"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
       </div>
 
       {/* Desktop Sidebar */}
       <aside className={`hidden md:flex h-screen bg-[#111114] border-r border-[#222228] transition-all duration-300 flex-col ${isCollapsed ? "w-20" : "w-64"}`}>
         <SidebarContent />
       </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[50] md:hidden"
-            />
-            <motion.aside
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[280px] bg-[#111114] z-[60] md:hidden border-r border-[#222228]"
-            >
-              <SidebarContent mobile />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 }
