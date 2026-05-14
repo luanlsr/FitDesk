@@ -1,27 +1,22 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Dumbbell, 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  PlayCircle, 
+import {
+  Dumbbell,
+  Plus,
+  Search,
+  MoreVertical,
+  PlayCircle,
   Trash2,
-  Tag,
-  ChevronRight,
   X,
-  PlusCircle,
   Video
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getLibraryExercises, createLibraryExercise, deleteLibraryExercise } from "@/app/actions/library";
 import ModalPortal from "@/components/ModalPortal";
+import { ExerciseVisual } from "@/components/ExerciseVisual";
 
 const categories = ["Peito", "Costas", "Pernas", "Ombros", "Braços", "Core", "Cardio", "Mobilidade"];
-
-import { useMemo } from "react";
 
 export default function BibliotecaPage() {
   const [exercises, setExercises] = useState<any[]>([]);
@@ -96,7 +91,7 @@ export default function BibliotecaPage() {
           </div>
           <p className="text-[#7A7A85] text-sm">Acesse e catalogue seus exercícios favoritos para montagem rápida de treinos.</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           className="bg-[#FF5C00] text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-[0_0_20px_rgba(255,92,0,0.2)] hover:bg-[#FF7A2E] transition-all flex items-center gap-2 cursor-pointer"
         >
@@ -108,23 +103,23 @@ export default function BibliotecaPage() {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[#16161A] border border-[#222228] p-4 rounded-2xl">
         <div className="relative flex-1 w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85]" />
-          <input 
-            type="text" 
-            placeholder="Buscar exercício..." 
+          <input
+            type="text"
+            placeholder="Buscar exercício..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-[#0A0A0B] border border-[#222228] rounded-xl pl-10 pr-4 py-2 text-sm text-[#F5F5F0] focus:border-[#FF5C00] outline-none transition-all"
           />
         </div>
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
-          <button 
+          <button
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-xl text-[0.7rem] font-bold transition-all border whitespace-nowrap cursor-pointer ${!selectedCategory ? "bg-[#FF5C00] text-white border-[#FF5C00]" : "bg-[#0A0A0B] text-[#7A7A85] border-[#222228] hover:text-[#F5F5F0]"}`}
           >
             Todos
           </button>
           {categories.map(cat => (
-            <button 
+            <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-xl text-[0.7rem] font-bold transition-all border whitespace-nowrap cursor-pointer ${selectedCategory === cat ? "bg-[#FF5C00] text-white border-[#FF5C00]" : "bg-[#0A0A0B] text-[#7A7A85] border-[#222228] hover:text-[#F5F5F0]"}`}
@@ -154,31 +149,21 @@ export default function BibliotecaPage() {
               onClick={() => setSelectedExercise(ex)}
               className="bg-[#16161A] border border-[#222228] rounded-2xl hover:border-[#FF5C00]/30 transition-all group relative overflow-hidden flex flex-col cursor-pointer hover:bg-[#1C1C21]"
             >
-              {/* Imagem do Exercício */}
-              <div className="relative h-40 w-full bg-[#0A0A0B] overflow-hidden">
-                {ex.imageUrl ? (
-                  <img 
-                    src={ex.imageUrl} 
-                    alt={ex.name} 
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Dumbbell className="w-12 h-12 text-[#222228]" />
+                  <div className="relative group overflow-hidden bg-[#0A0A0B]">
+                    <ExerciseVisual 
+                      imageUrl={ex.imageUrl} 
+                      videoUrl={ex.videoUrl} 
+                      className="w-full aspect-video"
+                      animate={false} 
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="w-12 h-12 bg-[#FF5C00] rounded-full flex items-center justify-center text-white scale-90 group-hover:scale-100 transition-transform">
+                        <PlayCircle className="w-6 h-6" />
+                      </div>
+                    </div>
                   </div>
-                )}
+
                 <div className="absolute top-3 right-3 flex gap-1">
-                  {ex.videoUrl && (
-                    <a 
-                      href={ex.videoUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-[#FFD600] hover:bg-[#FFD600] hover:text-black transition-all"
-                    >
-                      <PlayCircle className="w-4 h-4" />
-                    </a>
-                  )}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -194,12 +179,11 @@ export default function BibliotecaPage() {
                     {ex.category}
                   </span>
                 </div>
-              </div>
 
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[#F5F5F0] font-bold truncate pr-2">{ex.name}</h3>
-                  {ex.userId === null && (
+                  {ex.personalId === null && (
                     <span className="text-[0.5rem] bg-[#00E676]/10 text-[#00E676] px-1.5 py-0.5 rounded border border-[#00E676]/20 flex-shrink-0">GLOBAL</span>
                   )}
                 </div>
@@ -216,165 +200,171 @@ export default function BibliotecaPage() {
                 </div>
               </div>
             </motion.div>
-          ))
+      ))
         )}
-      </div>
-
-      {/* Botão Carregar Mais */}
-      {!isLoading && filteredExercises.length > displayedExercises.length && (
-        <div className="mt-12 flex flex-col items-center gap-4">
-          <p className="text-[#7A7A85] text-xs">Exibindo {displayedExercises.length} de {filteredExercises.length} exercícios</p>
-          <button 
-            onClick={() => setDisplayLimit(prev => prev + 24)}
-            className="px-8 py-3 bg-[#16161A] border border-[#222228] text-[#F5F5F0] text-sm font-bold rounded-xl hover:border-[#FF5C00] hover:text-[#FF5C00] transition-all cursor-pointer"
-          >
-            Carregar mais exercícios
-          </button>
-        </div>
-      )}
-
-      {/* Footer Info */}
-      {!isLoading && filteredExercises.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-[#222228] text-center">
-          <p className="text-[#333338] text-[0.6rem] uppercase tracking-widest font-bold">
-            FitDesk Library v4.0 • {exercises.length} Exercícios Catalogados
-          </p>
-        </div>
-      )}
-
-      {/* Modal Novo Exercício */}
-      {isModalOpen && (
-        <ModalPortal>
-          <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="fixed inset-0" onClick={() => setIsModalOpen(false)}></div>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-lg bg-[#16161A] border border-[#222228] rounded-[32px] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden"
-            >
-              {/* Header Fixo */}
-              <div className="flex justify-between items-center p-8 border-b border-[#222228] bg-[#111114]">
-                <h2 className="text-xl font-bold text-[#F5F5F0]">Adicionar à Biblioteca</h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 text-[#7A7A85] hover:text-[#F5F5F0] hover:bg-[#222228] rounded-xl transition-all cursor-pointer"><X className="w-5 h-5" /></button>
-              </div>
-
-              <form onSubmit={handleCreate} id="add-library-form" className="flex flex-col flex-1 overflow-hidden">
-                  {/* Body com Rolagem */}
-                  <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
-                      <div className="space-y-4">
-                          <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Nome do Exercício</label>
-                              <input name="name" required className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: Supino Reto com Barra" />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Categoria</label>
-                              <select name="category" required className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]">
-                                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                              </select>
-                          </div>
-                           <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">URL da Imagem de Referência</label>
-                              <input name="imageUrl" className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="https://images.unsplash.com/..." />
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Vídeo (URL)</label>
-                              <div className="relative">
-                                  <PlayCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
-                                  <input name="videoUrl" className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="https://..." />
-                              </div>
-                          </div>
-                          <div className="space-y-2">
-                              <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Instruções de Execução</label>
-                              <textarea name="description" rows={3} className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] resize-none" placeholder="Descreva brevemente como realizar o exercício..." />
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Footer Fixo */}
-                  <div className="p-8 border-t border-[#222228] bg-[#111114]">
-                      <button type="submit" className="w-full bg-[#FF5C00] text-white py-4 rounded-xl font-bold hover:bg-[#FF7A2E] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-xl shadow-[#FF5C00]/10">
-                          Salvar na Biblioteca
-                      </button>
-                  </div>
-              </form>
-            </motion.div>
-          </div>
-        </ModalPortal>
-      )}
-
-      {/* Modal Detalhes do Exercício */}
-      {selectedExercise && (
-        <ModalPortal>
-          <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="fixed inset-0" onClick={() => setSelectedExercise(null)}></div>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-2xl bg-[#16161A] border border-[#222228] rounded-[32px] shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
-            >
-              <button 
-                onClick={() => setSelectedExercise(null)} 
-                className="absolute top-4 right-4 z-20 p-2 bg-black/50 text-white hover:bg-black rounded-full transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Área Visual */}
-              <div className="w-full md:w-1/2 bg-[#0A0A0B] relative flex items-center justify-center min-h-[300px]">
-                {selectedExercise.imageUrl ? (
-                  <img 
-                    src={selectedExercise.imageUrl} 
-                    alt={selectedExercise.name} 
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <Dumbbell className="w-20 h-20 text-[#222228]" />
-                )}
-                <div className="absolute bottom-6 left-6">
-                   <div className="bg-[#FF5C00] text-white text-[0.6rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-2 inline-block">
-                     {selectedExercise.category}
-                   </div>
-                </div>
-              </div>
-
-              {/* Informações */}
-              <div className="w-full md:w-1/2 p-8 flex flex-col overflow-y-auto custom-scrollbar">
-                <h2 className="text-2xl font-bold text-[#F5F5F0] mb-4">{selectedExercise.name}</h2>
-                
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h4 className="text-[0.65rem] uppercase font-bold text-[#7A7A85] tracking-widest">Como executar</h4>
-                    <p className="text-[#F5F5F0]/80 text-sm leading-relaxed text-justify">
-                      {selectedExercise.description || "Nenhuma instrução detalhada disponível para este exercício."}
-                    </p>
-                  </div>
-
-                  {selectedExercise.videoUrl && (
-                    <div className="pt-4 border-t border-[#222228]">
-                      <a 
-                        href={selectedExercise.videoUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full bg-[#FFD600]/10 text-[#FFD600] py-3 rounded-xl border border-[#FFD600]/20 hover:bg-[#FFD600] hover:text-black transition-all font-bold text-sm"
-                      >
-                        <PlayCircle className="w-5 h-5" /> Assistir Vídeo Aula
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-[#222228] flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[0.6rem] text-[#333338] uppercase font-bold">Tipo</span>
-                      <span className="text-xs text-[#7A7A85] font-bold">{selectedExercise.userId === null ? "Global FitDesk" : "Personalizado"}</span>
-                    </div>
-                    <Dumbbell className="w-8 h-8 text-[#222228]" />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </ModalPortal>
-      )}
     </div>
+
+      {/* Botão Carregar Mais */ }
+  {
+    !isLoading && filteredExercises.length > displayedExercises.length && (
+      <div className="mt-12 flex flex-col items-center gap-4">
+        <p className="text-[#7A7A85] text-xs">Exibindo {displayedExercises.length} de {filteredExercises.length} exercícios</p>
+        <button
+          onClick={() => setDisplayLimit(prev => prev + 24)}
+          className="px-8 py-3 bg-[#16161A] border border-[#222228] text-[#F5F5F0] text-sm font-bold rounded-xl hover:border-[#FF5C00] hover:text-[#FF5C00] transition-all cursor-pointer"
+        >
+          Carregar mais exercícios
+        </button>
+      </div>
+    )
+  }
+
+  {/* Footer Info */ }
+  {
+    !isLoading && filteredExercises.length > 0 && (
+      <div className="mt-12 pt-8 border-t border-[#222228] text-center">
+        <p className="text-[#333338] text-[0.6rem] uppercase tracking-widest font-bold">
+          FitDesk Library v4.0 • {exercises.length} Exercícios Catalogados
+        </p>
+      </div>
+    )
+  }
+
+  {/* Modal Novo Exercício */ }
+  {
+    isModalOpen && (
+      <ModalPortal>
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0" onClick={() => setIsModalOpen(false)}></div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="w-full max-w-lg bg-[#16161A] border border-[#222228] rounded-[32px] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden"
+          >
+            {/* Header Fixo */}
+            <div className="flex justify-between items-center p-8 border-b border-[#222228] bg-[#111114]">
+              <h2 className="text-xl font-bold text-[#F5F5F0]">Adicionar à Biblioteca</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-[#7A7A85] hover:text-[#F5F5F0] hover:bg-[#222228] rounded-xl transition-all cursor-pointer"><X className="w-5 h-5" /></button>
+            </div>
+
+            <form onSubmit={handleCreate} id="add-library-form" className="flex flex-col flex-1 overflow-hidden">
+              {/* Body com Rolagem */}
+              <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Nome do Exercício</label>
+                    <input name="name" required className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="Ex: Supino Reto com Barra" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Categoria</label>
+                    <select name="category" required className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]">
+                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">URL da Imagem de Referência</label>
+                    <input name="imageUrl" className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="https://images.unsplash.com/..." />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Vídeo (URL)</label>
+                    <div className="relative">
+                      <PlayCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#333338]" />
+                      <input name="videoUrl" className="w-full bg-[#0A0A0B] border border-[#222228] pl-10 pr-4 py-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="https://..." />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[0.65rem] uppercase font-bold text-[#7A7A85]">Instruções de Execução</label>
+                    <textarea name="description" rows={3} className="w-full bg-[#0A0A0B] border border-[#222228] p-3 rounded-xl text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00] resize-none" placeholder="Descreva brevemente como realizar o exercício..." />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Fixo */}
+              <div className="p-8 border-t border-[#222228] bg-[#111114]">
+                <button type="submit" className="w-full bg-[#FF5C00] text-white py-4 rounded-xl font-bold hover:bg-[#FF7A2E] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shadow-xl shadow-[#FF5C00]/10">
+                  Salvar na Biblioteca
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      </ModalPortal>
+    )
+  }
+
+  {/* Modal Detalhes do Exercício */ }
+  {
+    selectedExercise && (
+      <ModalPortal>
+        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0" onClick={() => setSelectedExercise(null)}></div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-2xl bg-[#16161A] border border-[#222228] rounded-[32px] shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+          >
+            <button
+              onClick={() => setSelectedExercise(null)}
+              className="absolute top-4 right-4 z-20 p-2 bg-black/50 text-white hover:bg-black rounded-full transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Área Visual */}
+            <div className="w-full md:w-1/2 bg-[#0A0A0B] relative flex items-center justify-center min-h-[400px]">
+              <ExerciseVisual
+                imageUrl={selectedExercise.imageUrl}
+                videoUrl={selectedExercise.videoUrl}
+                className="w-full h-full"
+                animate={true}
+              />
+
+              <div className="absolute bottom-6 left-6">
+                <div className="bg-[#FF5C00] text-white text-[0.6rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-2 inline-block">
+                  {selectedExercise.category}
+                </div>
+              </div>
+            </div>
+
+            {/* Informações */}
+            <div className="w-full md:w-1/2 p-8 flex flex-col overflow-y-auto custom-scrollbar">
+              <h2 className="text-2xl font-bold text-[#F5F5F0] mb-4">{selectedExercise.name}</h2>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h4 className="text-[0.65rem] uppercase font-bold text-[#7A7A85] tracking-widest">Como executar</h4>
+                  <p className="text-[#F5F5F0]/80 text-sm leading-relaxed text-justify">
+                    {selectedExercise.description || "Nenhuma instrução detalhada disponível para este exercício."}
+                  </p>
+                </div>
+
+                {selectedExercise.videoUrl && (
+                  <div className="pt-4 border-t border-[#222228]">
+                    <a
+                      href={selectedExercise.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full bg-[#FFD600]/10 text-[#FFD600] py-3 rounded-xl border border-[#FFD600]/20 hover:bg-[#FFD600] hover:text-black transition-all font-bold text-sm"
+                    >
+                      <PlayCircle className="w-5 h-5" /> Assistir Vídeo Aula
+                    </a>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-[#222228] flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[0.6rem] text-[#333338] uppercase font-bold">Tipo</span>
+                    <span className="text-xs text-[#7A7A85] font-bold">{selectedExercise.personalId === null ? "Global FitDesk" : "Personalizado"}</span>
+                  </div>
+                  <Dumbbell className="w-8 h-8 text-[#222228]" />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </ModalPortal>
+    )
+  }
+</div>
   );
 }

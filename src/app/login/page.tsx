@@ -8,8 +8,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@fitdesk.com.br");
-  const [password, setPassword] = useState("master123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center ml-1">
               <label className="text-[0.7rem] uppercase tracking-wider text-[#7A7A85] font-bold">Senha</label>
-              <Link href="#" className="text-[0.7rem] text-[#FF5C00] hover:underline font-bold uppercase tracking-wider">Esqueceu?</Link>
+              <Link href="/recuperar-senha" className="text-[0.7rem] text-[#FF5C00] hover:underline font-bold uppercase tracking-wider">Esqueceu?</Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A7A85]" />
@@ -129,15 +129,6 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-10 pt-10 border-t border-[#222228] text-center">
-          <p className="text-[0.8rem] text-[#7A7A85] mb-6">Ou entre com sua conta social</p>
-          <div className="grid grid-cols-1 gap-4">
-            <button 
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="flex items-center justify-center gap-2 py-3 border border-[#222228] rounded-xl text-sm text-[#CFCFC8] hover:bg-[#16161A] hover:border-[#7A7A85] transition-all cursor-pointer group"
-            >
-              <img src="https://www.google.com/favicon.ico" alt="" className="w-4 h-4 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all" /> Entrar com Google
-            </button>
-          </div>
         </div>
 
         <p className="mt-8 text-center text-[0.7rem] text-[#7A7A85] italic font-light">

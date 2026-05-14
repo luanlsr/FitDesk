@@ -1,49 +1,64 @@
 import NextAuth from "next-auth";
-import { SupabaseAdapter } from "@auth/supabase-adapter";
-import { userService } from "@/services/userService";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
-import bcrypt from "bcryptjs";
+import { supabaseAdmin } from "@/lib/supabase";
+import { userService } from "@/services/userService";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   secret: process.env.AUTH_SECRET || "FitDeskSecretToken2026!",
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-  }) as any,
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days persistent session
+  },
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
     Credentials({
       async authorize(credentials) {
+        console.log("AUTHORIZE START", credentials?.email);
         const { email, password } = credentials;
-        console.log("Tentativa de login para:", email);
 
-        const user = await userService.getByEmail(email as string);
+        // Supabase Auth valida a senha usando o admin para evitar erro de localStorage no Node
+        const { data: authData, error: authError } =
+          await supabaseAdmin.auth.signInWithPassword({
+            email: email as string,
+            password: password as string,
+          });
 
-        console.log("Usuário encontrado:", !!user);
+        console.log("AUTH DATA:", authData?.user?.id, "ERROR:", authError?.message);
 
-        if (!user || !user.password) return null;
+        if (authError || !authData.user) {
+          console.error("Login recusado no auth:", authError?.message);
+          return null;
+        }
 
-        const passwordMatch = await bcrypt.compare(
-          password as string,
-          user.password
-        );
+        // Busca perfil público
+        const userProfile = await userService.getByEmail(email as string);
+        console.log("USER PROFILE DB:", userProfile?.id || "NULL");
+        
+        if (!userProfile) {
+            console.log("Perfil não encontrado no public.users");
+            return null;
+        }
 
-        console.log("Senha válida:", passwordMatch);
-
-        if (passwordMatch) return user;
-
-        return null;
+        console.log("AUTHORIZE SUCCESS!");
+        return {
+          id: userProfile.id,
+          name: userProfile.name,
+          email: userProfile.email,
+          role: userProfile.role,
+        };
       },
     }),
   ],
   callbacks: {
+    async jwt({ token, user }) {
+      // Na primeira vez que o token é criado, `user` existe
+      if (user) {
+        token.sub = user.id;
+        token.role = (user as any).role;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
@@ -52,16 +67,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
       }
       return session;
-    },
-    async jwt({ token }) {
-      if (!token.sub) return token;
-
-      const existingUser = await userService.getById(token.sub);
-
-      if (!existingUser) return token;
-
-      token.role = existingUser.role;
-      return token;
     },
   },
 });
