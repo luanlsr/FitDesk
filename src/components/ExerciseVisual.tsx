@@ -14,9 +14,36 @@ interface ExerciseVisualProps {
 export function ExerciseVisual({ imageUrl, videoUrl, className = "", animate = true }: ExerciseVisualProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  // Usa o GIF animado se existir, senão usa a imagem estática de fallback
-  const sourceUrl = animate && videoUrl ? videoUrl : (imageUrl || videoUrl);
+  const isGif = videoUrl?.toLowerCase().endsWith(".gif");
+  const hasMultipleFrames = imageUrl && videoUrl && imageUrl !== videoUrl && !isGif;
+  const playAnimation = animate || isHovered;
+
+  // Efeito para alternar imagens e simular animação/GIF
+  useEffect(() => {
+    if (!playAnimation || !hasMultipleFrames) {
+      setCurrentFrame(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentFrame((prev) => (prev === 0 ? 1 : 0));
+    }, 800); // Alterna a cada 800ms para simular o movimento do exercício
+
+    return () => clearInterval(interval);
+  }, [playAnimation, hasMultipleFrames]);
+
+  // Escolhe a URL de origem da imagem/GIF
+  let sourceUrl = imageUrl || videoUrl;
+  if (playAnimation) {
+    if (isGif) {
+      sourceUrl = videoUrl;
+    } else if (hasMultipleFrames) {
+      sourceUrl = currentFrame === 0 ? imageUrl : videoUrl;
+    }
+  }
 
   if (!sourceUrl) {
     return (
@@ -27,15 +54,19 @@ export function ExerciseVisual({ imageUrl, videoUrl, className = "", animate = t
   }
 
   return (
-    <div className={`relative overflow-hidden bg-[#0A0A0B] flex items-center justify-center ${className}`}>
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`relative overflow-hidden bg-[#0A0A0B] flex items-center justify-center ${className}`}
+    >
       <AnimatePresence mode="wait">
         <motion.img
           key={sourceUrl}
           src={sourceUrl}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 0.85 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          exit={{ opacity: 0.85 }}
+          transition={{ duration: 0.2 }}
           onLoad={() => setIsLoading(false)}
           onError={() => {
             setHasError(true);
