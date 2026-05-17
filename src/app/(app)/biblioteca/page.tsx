@@ -374,18 +374,39 @@ export default function BibliotecaPage() {
                   </p>
                 </div>
 
-                {selectedExercise.videoUrl && (
-                  <div className="pt-4 border-t border-[#222228]">
-                    <a
-                      href={selectedExercise.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-[#FFD600]/10 text-[#FFD600] py-3 rounded-xl border border-[#FFD600]/20 hover:bg-[#FFD600] hover:text-black transition-all font-bold text-sm"
-                    >
-                      <PlayCircle className="w-5 h-5" /> Assistir Vídeo Aula
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  const isRealVideoOrGif = selectedExercise.videoUrl && 
+                    !selectedExercise.videoUrl.toLowerCase().endsWith('.jpg') && 
+                    !selectedExercise.videoUrl.toLowerCase().endsWith('.jpeg') && 
+                    !selectedExercise.videoUrl.toLowerCase().endsWith('.png');
+
+                  return isRealVideoOrGif ? (
+                    <div className="pt-4 border-t border-[#222228]">
+                      <a
+                        href={selectedExercise.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full bg-[#FFD600]/10 text-[#FFD600] py-3 rounded-xl border border-[#FFD600]/20 hover:bg-[#FFD600] hover:text-black transition-all font-bold text-sm"
+                      >
+                        <PlayCircle className="w-5 h-5" /> Assistir Vídeo Aula
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="pt-4 border-t border-[#222228]">
+                      <div className="bg-[#1C1C21]/60 p-4 rounded-xl border border-[#222228] flex items-start gap-3">
+                        <div className="p-2 bg-[#FF5C00]/10 rounded-lg text-[#FF5C00] shrink-0 mt-0.5 animate-pulse">
+                          <Dumbbell className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h5 className="text-[#F5F5F0] text-xs font-bold mb-1">Demonstração Interativa</h5>
+                          <p className="text-[#7A7A85] text-[0.7rem] leading-relaxed">
+                            A execução com postura correta deste exercício está sendo demonstrada passo a passo no painel animado ao lado.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-4 border-t border-[#222228] flex items-center justify-between">
                   <div className="flex flex-col">
