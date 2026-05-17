@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,7 +52,7 @@ function getPasswordStrength(password: string): { level: 0 | 1 | 2 | 3; label: s
   return { level: 3, label: "Forte", color: "#00E676" };
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const planKey = searchParams.get("plan") || "pro";
@@ -344,5 +344,17 @@ export default function CheckoutPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center text-white font-medium">
+        Carregando formulário seguro...
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   );
 }
