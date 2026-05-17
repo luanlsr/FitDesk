@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Mockup from "@/components/Mockup";
+import Stats from "@/components/Stats";
+import PainPoints from "@/components/PainPoints";
 import Features from "@/components/Features";
 import WhatsApp from "@/components/WhatsApp";
 import Workout from "@/components/Workout";
 import Aluno from "@/components/Aluno";
+import Testimonials from "@/components/Testimonials";
 import Pricing from "@/components/Pricing";
+import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
 export default function LandingPage() {
@@ -49,11 +53,15 @@ export default function LandingPage() {
       <div className="relative z-10 -mt-24 md:-mt-48 pointer-events-none">
         <Mockup />
       </div>
+      <Stats />
+      <PainPoints />
       <Features />
       <WhatsApp />
       <Workout />
       <Aluno />
+      <Testimonials />
       <Pricing />
+      <FinalCTA />
       <Footer />
     </main>
   );
