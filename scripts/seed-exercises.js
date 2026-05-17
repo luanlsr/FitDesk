@@ -54,7 +54,7 @@ const muscleToCategory = {
 
 const categoryMap = {
   'cardio': 'Cardio',
-  'alongamento': 'Mobilidade',
+  'alongamento': 'Alongamento',
   'pliometria': 'Cardio',
   'strongman': 'Costas',
   'potência': 'Costas'
