@@ -1,70 +1,64 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { workoutService } from "@/services/workoutService";
+import { createWorkoutSchema, addWorkoutExerciseSchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
 
 export async function getWorkouts(studentId?: string) {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
   try {
-    return await workoutService.getAll(session.user.id, studentId);
-  } catch (error) {
-    console.error("Error fetching workouts:", error);
+    const { db, userId } = await requireAuth();
+    return await workoutService.getAll(db, userId, studentId);
+  } catch {
     return [];
   }
 }
 
 export async function createWorkout(studentId: string, name: string, description?: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
   try {
-    const workout = await workoutService.create({
-      name,
-      description,
-      studentId,
-      personalId: session.user.id,
-    });
+    const { db, userId } = await requireAuth();
+
+    const parsed = createWorkoutSchema.safeParse({ name, description: description || "", studentId });
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    const workout = await workoutService.create(db, { ...parsed.data, personalId: userId });
     revalidatePath("/treinos");
     return { success: true, workoutId: workout.id };
-  } catch (error) {
-    console.error("Error creating workout:", error);
-    return { success: false, error: "Falha ao criar treino" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao criar treino" };
   }
 }
 
-export async function addExerciseToWorkout(workoutId: string, data: {
-  exerciseId: string;
-  sets: number;
-  reps: string;
-  weight?: string;
-  rest?: string;
-}) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
+export async function addExerciseToWorkout(
+  workoutId: string,
+  data: { exerciseId: string; sets: number; reps: string; weight?: string; rest?: string }
+) {
   try {
-    await workoutService.addExercise(workoutId, data);
+    const { db } = await requireAuth();
+
+    const parsed = addWorkoutExerciseSchema.safeParse({ workoutId, ...data });
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    const { workoutId: wId, ...exerciseData } = parsed.data;
+    await workoutService.addExercise(db, wId, exerciseData);
     revalidatePath("/treinos");
     return { success: true };
-  } catch (error) {
-    console.error("Error adding exercise:", error);
-    return { success: false, error: "Falha ao adicionar exercício" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao adicionar exercício" };
   }
 }
 
 export async function deleteWorkout(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
   try {
-    await workoutService.delete(id, session.user.id);
+    const { db, userId } = await requireAuth();
+    await workoutService.delete(db, id, userId);
     revalidatePath("/treinos");
     return { success: true };
-  } catch (error) {
-    console.error("Error deleting workout:", error);
-    return { success: false, error: "Falha ao remover treino" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover treino" };
   }
 }

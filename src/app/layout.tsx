@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Sora, Space_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
+import CookieBanner from "@/components/CookieBanner";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -56,6 +57,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           {children}
+          <CookieBanner />
         </SessionProvider>
       </body>
     </html>

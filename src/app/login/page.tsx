@@ -27,6 +27,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
+        lgpdConsent: acceptedTerms ? "true" : "false",
         redirect: false,
       });
 

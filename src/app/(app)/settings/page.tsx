@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { exportUserData, deleteUserAccount } from "@/app/actions/privacy";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -234,10 +235,66 @@ export default function SettingsPage() {
             </motion.div>
           )}
 
-          {(activeTab === "notificacoes" || activeTab === "privacidade") && (
+          {activeTab === "privacidade" && (
+            <motion.div 
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="p-6 md:p-8 space-y-8"
+            >
+              <div>
+                <h3 className="text-[#F5F5F0] font-semibold mb-2">Exportar Meus Dados</h3>
+                <p className="text-[#7A7A85] text-sm mb-4">
+                  Baixe um arquivo JSON contendo todas as suas informações pessoais, alunos e dados financeiros em conformidade com o Art. 18 da LGPD.
+                </p>
+                <button 
+                  onClick={async () => {
+                    const res = await exportUserData();
+                    if (res.success && res.data) {
+                      const blob = new Blob([res.data], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "meus_dados_fitdesk.json";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } else {
+                      alert("Erro ao exportar dados.");
+                    }
+                  }}
+                  className="bg-[#16161A] border border-[#222228] text-[#F5F5F0] px-4 py-2.5 rounded-xl text-xs font-bold hover:border-[#FF5C00] transition-all"
+                >
+                  Exportar Dados (JSON)
+                </button>
+              </div>
+
+              <div className="pt-6 border-t border-[#222228]">
+                <h3 className="text-[#FF4444] font-semibold mb-2">Excluir Conta e Dados</h3>
+                <p className="text-[#7A7A85] text-sm mb-4">
+                  Esta ação é irreversível. Seu perfil será anonimizado e você perderá acesso ao painel imediatamente. Registros financeiros poderão ser mantidos anonimizados por 5 anos para fins fiscais.
+                </p>
+                <button 
+                  onClick={async () => {
+                    if (confirm("Tem certeza absoluta? Esta ação não pode ser desfeita.")) {
+                      const res = await deleteUserAccount();
+                      if (res.success) {
+                        signOut({ callbackUrl: "/" });
+                      } else {
+                        alert(res.error);
+                      }
+                    }
+                  }}
+                  className="bg-[#FF4444]/10 border border-[#FF4444]/20 text-[#FF4444] px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#FF4444] hover:text-white transition-all"
+                >
+                  Excluir Permanentemente
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "notificacoes" && (
             <div className="p-12 text-center space-y-4">
               <div className="w-16 h-16 bg-[#0A0A0B] border border-[#222228] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Shield className="w-8 h-8 text-[#FF5C00] opacity-20" />
+                <Bell className="w-8 h-8 text-[#FF5C00] opacity-20" />
               </div>
               <h3 className="text-[#F5F5F0] font-semibold">Em breve</h3>
               <p className="text-[#7A7A85] text-sm max-w-xs mx-auto">

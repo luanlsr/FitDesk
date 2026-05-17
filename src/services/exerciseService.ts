@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const exerciseService = {
-  async getAll(personalId: string, isMaster: boolean = false) {
-    let query = supabaseAdmin
+  async getAll(db: SupabaseClient, personalId: string, isMaster: boolean = false) {
+    let query = db
       .from("library_exercises")
       .select("*")
       .order("name", { ascending: true });
@@ -16,8 +16,8 @@ export const exerciseService = {
     return data || [];
   },
 
-  async create(exerciseData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, exerciseData: any) {
+    const { data, error } = await db
       .from("library_exercises")
       .insert(exerciseData)
       .select()
@@ -27,8 +27,8 @@ export const exerciseService = {
     return data;
   },
 
-  async delete(id: string, personalId: string, isMaster: boolean = false) {
-    let query = supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string, isMaster: boolean = false) {
+    let query = db
       .from("library_exercises")
       .delete()
       .eq("id", id);
@@ -40,5 +40,5 @@ export const exerciseService = {
     const { error } = await query;
     if (error) throw error;
     return true;
-  }
+  },
 };

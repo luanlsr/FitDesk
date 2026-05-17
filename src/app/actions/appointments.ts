@@ -1,97 +1,96 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { appointmentService } from "@/services/appointmentService";
+import { createAppointmentSchema, updateAppointmentSchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export async function getAppointments(start: Date, end: Date) {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
   try {
-    return await appointmentService.getByRange(session.user.id, start, end);
-  } catch (error) {
-    console.error("Error fetching appointments:", error);
+    const { db, userId } = await requireAuth();
+    return await appointmentService.getByRange(db, userId, start, end);
+  } catch {
     return [];
   }
 }
 
 export async function createAppointment(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const studentId = formData.get("studentId") as string;
-  const start = new Date(formData.get("start") as string);
-  const end = new Date(formData.get("end") as string);
-
   try {
-    await appointmentService.create({
-      title,
-      description,
-      studentId: studentId === "none" ? null : studentId,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      personalId: session.user.id,
+    const { db, userId } = await requireAuth();
+
+    const studentIdRaw = formData.get("studentId") as string;
+    const parsed = createAppointmentSchema.safeParse({
+      title: formData.get("title"),
+      description: formData.get("description") || "",
+      start: formData.get("start"),
+      end: formData.get("end"),
+      status: formData.get("status") || "Agendado",
+      studentId: studentIdRaw && studentIdRaw !== "none" ? studentIdRaw : undefined,
     });
-    
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await appointmentService.create(db, { ...parsed.data, personalId: userId });
     revalidatePath("/agenda");
     return { success: true };
-  } catch (error) {
-    console.error("Error creating appointment:", error);
-    return { success: false, error: "Falha ao criar agendamento" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao criar agendamento" };
   }
 }
 
 export async function updateAppointment(id: string, formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  const title = formData.get("title") as string;
-  const description = formData.get("description") as string;
-  const status = formData.get("status") as string;
-
   try {
-    await appointmentService.update(id, session.user.id, {
-      title,
-      description,
-      status,
+    const { db, userId } = await requireAuth();
+
+    const parsed = updateAppointmentSchema.safeParse({
+      title: formData.get("title"),
+      description: formData.get("description") || "",
+      status: formData.get("status"),
     });
-    
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await appointmentService.update(db, id, userId, parsed.data);
     revalidatePath("/agenda");
     return { success: true };
-  } catch (error) {
-    console.error("Error updating appointment:", error);
-    return { success: false, error: "Falha ao atualizar agendamento" };
-  }
-}
-
-export async function deleteAppointment(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  try {
-    await appointmentService.delete(id, session.user.id);
-    revalidatePath("/agenda");
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting appointment:", error);
-    return { success: false, error: "Falha ao remover agendamento" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao atualizar agendamento" };
   }
 }
 
 export async function updateAppointmentStatus(id: string, status: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
   try {
-    await appointmentService.update(id, session.user.id, { status });
+    const { db, userId } = await requireAuth();
+
+    const parsed = z
+      .object({ id: z.string().uuid(), status: z.enum(["Agendado", "Realizado", "Cancelado"]) })
+      .safeParse({ id, status });
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await appointmentService.update(db, id, userId, { status: parsed.data.status });
     revalidatePath("/agenda");
     revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
-    console.error("Error updating appointment status:", error);
-    return { success: false, error: "Falha ao atualizar status" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao atualizar status" };
+  }
+}
+
+export async function deleteAppointment(id: string) {
+  try {
+    const { db, userId } = await requireAuth();
+    await appointmentService.delete(db, id, userId);
+    revalidatePath("/agenda");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover agendamento" };
   }
 }

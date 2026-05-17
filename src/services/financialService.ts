@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const financialService = {
-  async getByRange(personalId: string, start: Date, end: Date) {
-    const { data, error } = await supabaseAdmin
+  async getByRange(db: SupabaseClient, personalId: string, start: Date, end: Date) {
+    const { data, error } = await db
       .from("financial_entries")
       .select("*, student:students(name)")
       .eq("personalId", personalId)
@@ -14,8 +14,8 @@ export const financialService = {
     return data || [];
   },
 
-  async create(entryData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, entryData: any) {
+    const { data, error } = await db
       .from("financial_entries")
       .insert(entryData)
       .select()
@@ -25,8 +25,8 @@ export const financialService = {
     return data;
   },
 
-  async getStatsByRange(personalId: string, start: Date, end: Date) {
-    const { data, error } = await supabaseAdmin
+  async getStatsByRange(db: SupabaseClient, personalId: string, start: Date, end: Date) {
+    const { data, error } = await db
       .from("financial_entries")
       .select("amount, type")
       .eq("personalId", personalId)
@@ -35,7 +35,7 @@ export const financialService = {
 
     if (error) throw error;
 
-    const stats = data.reduce(
+    const stats = (data || []).reduce(
       (acc: any, curr: any) => {
         if (curr.type === "IN") acc.in += curr.amount;
         else acc.out += curr.amount;
@@ -48,8 +48,8 @@ export const financialService = {
     return stats;
   },
 
-  async delete(id: string, personalId: string) {
-    const { error } = await supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string) {
+    const { error } = await db
       .from("financial_entries")
       .delete()
       .eq("id", id)
@@ -57,5 +57,5 @@ export const financialService = {
 
     if (error) throw error;
     return true;
-  }
+  },
 };

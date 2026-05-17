@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const appointmentService = {
-  async getByRange(personalId: string, start: Date, end: Date) {
-    const { data, error } = await supabaseAdmin
+  async getByRange(db: SupabaseClient, personalId: string, start: Date, end: Date) {
+    const { data, error } = await db
       .from("appointments")
       .select("*, student:students(name)")
       .eq("personalId", personalId)
@@ -14,8 +14,8 @@ export const appointmentService = {
     return data || [];
   },
 
-  async create(appointmentData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, appointmentData: any) {
+    const { data, error } = await db
       .from("appointments")
       .insert(appointmentData)
       .select()
@@ -25,8 +25,8 @@ export const appointmentService = {
     return data;
   },
 
-  async update(id: string, personalId: string, updateData: any) {
-    const { data, error } = await supabaseAdmin
+  async update(db: SupabaseClient, id: string, personalId: string, updateData: any) {
+    const { data, error } = await db
       .from("appointments")
       .update(updateData)
       .eq("id", id)
@@ -38,8 +38,8 @@ export const appointmentService = {
     return data;
   },
 
-  async delete(id: string, personalId: string) {
-    const { error } = await supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string) {
+    const { error } = await db
       .from("appointments")
       .delete()
       .eq("id", id)
@@ -47,5 +47,5 @@ export const appointmentService = {
 
     if (error) throw error;
     return true;
-  }
+  },
 };

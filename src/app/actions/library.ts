@@ -1,55 +1,61 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { exerciseService } from "@/services/exerciseService";
+import { createExerciseSchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
 
 export async function getLibraryExercises() {
-  const session = await auth();
-  const isMaster = session?.user?.role === "MASTER";
-  const userId = session?.user?.id || 'none';
-
   try {
-    return await exerciseService.getAll(userId, isMaster);
-  } catch (error) {
-    console.error("Error fetching library exercises:", error);
+    const { db, userId, session } = await requireAuth();
+    const isMaster = session.user.role === "MASTER";
+    return await exerciseService.getAll(db, userId, isMaster);
+  } catch {
     return [];
   }
 }
 
-export async function createLibraryExercise(name: string, category: string, videoUrl?: string, description?: string, imageUrl?: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
+export async function createLibraryExercise(
+  name: string,
+  category: string,
+  videoUrl?: string,
+  description?: string,
+  imageUrl?: string
+) {
   try {
-    await exerciseService.create({
+    const { db, userId, session } = await requireAuth();
+
+    const parsed = createExerciseSchema.safeParse({
       name,
       category,
-      videoUrl,
-      description,
-      imageUrl,
-      personalId: session.user.role === "MASTER" ? null : session.user.id,
+      videoUrl: videoUrl || "",
+      description: description || "",
+      imageUrl: imageUrl || "",
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await exerciseService.create(db, {
+      ...parsed.data,
+      personalId: session.user.role === "MASTER" ? null : userId,
     });
     revalidatePath("/biblioteca");
     return { success: true };
-  } catch (error) {
-    console.error("Error creating library exercise:", error);
-    return { success: false, error: "Falha ao criar exercício na biblioteca" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao criar exercício na biblioteca" };
   }
 }
 
 export async function deleteLibraryExercise(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  const isMaster = session.user.role === "MASTER";
-
   try {
-    await exerciseService.delete(id, session.user.id, isMaster);
+    const { db, userId, session } = await requireAuth();
+    const isMaster = session.user.role === "MASTER";
+    await exerciseService.delete(db, id, userId, isMaster);
     revalidatePath("/biblioteca");
     return { success: true };
-  } catch (error) {
-    console.error("Error deleting library exercise:", error);
-    return { success: false, error: "Falha ao remover exercício" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover exercício" };
   }
 }

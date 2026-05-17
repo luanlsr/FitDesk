@@ -1,81 +1,68 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { financialService } from "@/services/financialService";
+import { createFinancialEntrySchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export async function getTransactions(month?: Date) {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
-  const start = month ? startOfMonth(month) : startOfMonth(new Date());
-  const end = month ? endOfMonth(month) : endOfMonth(new Date());
-
   try {
-    return await financialService.getByRange(session.user.id, start, end);
-  } catch (error) {
-    console.error("Error fetching transactions:", error);
+    const { db, userId } = await requireAuth();
+    const start = startOfMonth(month ?? new Date());
+    const end = endOfMonth(month ?? new Date());
+    return await financialService.getByRange(db, userId, start, end);
+  } catch {
     return [];
   }
 }
 
 export async function getFinancialStats(month?: Date) {
-  const session = await auth();
-  if (!session?.user?.id) return { in: 0, out: 0, balance: 0 };
-
-  const start = month ? startOfMonth(month) : startOfMonth(new Date());
-  const end = month ? endOfMonth(month) : endOfMonth(new Date());
-
   try {
-    return await financialService.getStatsByRange(session.user.id, start, end);
-  } catch (error) {
-    console.error("Error fetching stats:", error);
+    const { db, userId } = await requireAuth();
+    const start = startOfMonth(month ?? new Date());
+    const end = endOfMonth(month ?? new Date());
+    return await financialService.getStatsByRange(db, userId, start, end);
+  } catch {
     return { in: 0, out: 0, balance: 0 };
   }
 }
 
 export async function createTransaction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  const description = formData.get("description") as string;
-  const amount = parseFloat(formData.get("amount") as string);
-  const type = formData.get("type") as string; // IN or OUT
-  const category = formData.get("category") as string;
-  const studentId = formData.get("studentId") as string || null;
-  const dateStr = formData.get("date") as string;
-  const date = dateStr ? new Date(dateStr) : new Date();
-
   try {
-    await financialService.create({
-      description,
-      amount,
-      type,
-      category,
-      date: date.toISOString(),
-      studentId: studentId === "none" ? null : studentId,
-      personalId: session.user.id,
+    const { db, userId } = await requireAuth();
+
+    const dateRaw = formData.get("date") as string;
+    const studentIdRaw = formData.get("studentId") as string;
+
+    const parsed = createFinancialEntrySchema.safeParse({
+      description: formData.get("description"),
+      amount: parseFloat(formData.get("amount") as string),
+      type: formData.get("type"),
+      category: formData.get("category"),
+      date: dateRaw ? new Date(dateRaw).toISOString() : new Date().toISOString(),
+      studentId: studentIdRaw && studentIdRaw !== "none" ? studentIdRaw : undefined,
     });
-    
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await financialService.create(db, { ...parsed.data, personalId: userId });
     revalidatePath("/financeiro");
     return { success: true };
-  } catch (error) {
-    console.error("Error creating transaction:", error);
-    return { success: false, error: "Falha ao registrar transação" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao registrar transação" };
   }
 }
 
 export async function deleteTransaction(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
   try {
-    await financialService.delete(id, session.user.id);
+    const { db, userId } = await requireAuth();
+    await financialService.delete(db, id, userId);
     revalidatePath("/financeiro");
     return { success: true };
-  } catch (error) {
-    console.error("Error deleting transaction:", error);
-    return { success: false, error: "Falha ao remover transação" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover transação" };
   }
 }

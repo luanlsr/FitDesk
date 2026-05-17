@@ -1,73 +1,68 @@
-﻿"use server";
+"use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { leadService } from "@/services/leadService";
+import { createLeadSchema, updateLeadStatusSchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
 
 export async function getLeads() {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
   try {
-    return await leadService.getAll(session.user.id);
-  } catch (error) {
-    console.error("Error fetching leads:", error);
+    const { db, userId } = await requireAuth();
+    return await leadService.getAll(db, userId);
+  } catch {
     return [];
   }
 }
 
 export async function createLead(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
-
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const origin = formData.get("origin") as string;
-  const value = parseFloat(formData.get("value") as string) || 0;
-
   try {
-    await leadService.create({
-      name,
-      email,
-      phone,
-      origin,
-      value,
-      personalId: session.user.id,
+    const { db, userId } = await requireAuth();
+
+    const parsed = createLeadSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email") || "",
+      phone: formData.get("phone") || "",
+      origin: formData.get("origin") || "",
+      value: parseFloat(formData.get("value") as string) || 0,
+      status: formData.get("status") || "Aguardando",
     });
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await leadService.create(db, { ...parsed.data, personalId: userId });
     revalidatePath("/leads");
     return { success: true };
-  } catch (error) {
-    console.error("Error creating lead:", error);
-    return { success: false, error: "Falha ao criar lead" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao criar lead" };
   }
 }
 
 export async function updateLeadStatus(id: string, status: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
-
   try {
-    await leadService.update(id, session.user.id, { status });
+    const { db, userId } = await requireAuth();
+
+    const parsed = updateLeadStatusSchema.safeParse({ id, status });
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await leadService.update(db, id, userId, { status: parsed.data.status });
     revalidatePath("/leads");
     return { success: true };
-  } catch (error) {
-    console.error("Error updating lead status:", error);
-    return { success: false, error: "Falha ao atualizar status" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao atualizar status" };
   }
 }
 
 export async function deleteLead(id: string) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "NÃ£o autorizado" };
-
   try {
-    await leadService.delete(id, session.user.id);
+    const { db, userId } = await requireAuth();
+    await leadService.delete(db, id, userId);
     revalidatePath("/leads");
     return { success: true };
-  } catch (error) {
-    console.error("Error deleting lead:", error);
-    return { success: false, error: "Falha ao remover lead" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover lead" };
   }
 }
-

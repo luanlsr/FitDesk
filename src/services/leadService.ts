@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const leadService = {
-  async getAll(personalId: string) {
-    const { data, error } = await supabaseAdmin
+  async getAll(db: SupabaseClient, personalId: string) {
+    const { data, error } = await db
       .from("leads")
       .select("*")
       .eq("personalId", personalId)
@@ -12,8 +12,8 @@ export const leadService = {
     return data || [];
   },
 
-  async create(leadData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, leadData: any) {
+    const { data, error } = await db
       .from("leads")
       .insert(leadData)
       .select()
@@ -23,8 +23,8 @@ export const leadService = {
     return data;
   },
 
-  async update(id: string, personalId: string, updateData: any) {
-    const { data, error } = await supabaseAdmin
+  async update(db: SupabaseClient, id: string, personalId: string, updateData: any) {
+    const { data, error } = await db
       .from("leads")
       .update(updateData)
       .eq("id", id)
@@ -36,8 +36,8 @@ export const leadService = {
     return data;
   },
 
-  async delete(id: string, personalId: string) {
-    const { error } = await supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string) {
+    const { error } = await db
       .from("leads")
       .delete()
       .eq("id", id)
@@ -45,5 +45,5 @@ export const leadService = {
 
     if (error) throw error;
     return true;
-  }
+  },
 };

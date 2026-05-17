@@ -99,7 +99,7 @@ export default function Pricing() {
             </ul>
 
             <Link
-              href="/signup"
+              href={`/checkout?plan=${plan.name.toLowerCase()}`}
               className={`block w-full text-center py-3 md:py-3.5 rounded-lg text-[0.85rem] md:text-[0.9rem] font-bold no-underline transition-all ${
                 plan.featured
                   ? "bg-[#FF5C00] text-white shadow-[0_0_30px_rgba(255,92,0,0.3)] hover:bg-[#FF7A2E] hover:shadow-[0_0_40px_rgba(255,92,0,0.4)]"

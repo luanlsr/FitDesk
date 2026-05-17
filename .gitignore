@@ -51,3 +51,13 @@ next-env.d.ts
 .agent/
 .next/
 
+# SSH keys and sensitive credentials
+id_ed25519
+id_ed25519*
+*.pem
+*.key
+
+# Test output files with potential sensitive data
+*-out.txt
+test-*.txt
+

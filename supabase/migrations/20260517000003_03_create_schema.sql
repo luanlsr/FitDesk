@@ -1,19 +1,10 @@
--- RESET TOTAL E AGRESSIVO DO BANCO (SOMENTE SCHEMA PUBLIC)
--- 1. Limpar tabelas do schema public
-DROP TABLE IF EXISTS workout_items CASCADE;
-DROP TABLE IF EXISTS workouts CASCADE;
-DROP TABLE IF EXISTS library_exercises CASCADE;
-DROP TABLE IF EXISTS leads CASCADE;
-DROP TABLE IF EXISTS financial_entries CASCADE;
-DROP TABLE IF EXISTS appointments CASCADE;
-DROP TABLE IF EXISTS students CASCADE;
-DROP TABLE IF EXISTS student_groups CASCADE;
-DROP TABLE IF EXISTS sessions CASCADE;
-DROP TABLE IF EXISTS accounts CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS verification_tokens CASCADE;
+-- ==========================================
+-- FitDesk - Migration: 03_create_schema
+-- Descrição: Criação completa de tabelas, chaves
+-- estrangeiras, ativação de RLS e políticas de segurança.
+-- ==========================================
 
--- RECRIAÇÃO DAS TABELAS --
+-- 1. CRIAÇÃO DAS TABELAS DO BANCO DE DADOS
 
 CREATE TABLE users (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -128,7 +119,7 @@ CREATE TABLE workout_items (
   "createdAt" timestamp with time zone DEFAULT now()
 );
 
--- Habilitar RLS
+-- 2. HABILITAÇÃO DO ROW LEVEL SECURITY (RLS) EM TODAS AS TABELAS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
@@ -139,7 +130,7 @@ ALTER TABLE library_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workout_items ENABLE ROW LEVEL SECURITY;
 
--- Políticas
+-- 3. POLÍTICAS DE CONTROLE DE ACESSO (SEGURANÇA DO TENANT)
 CREATE POLICY "Users access own profile" ON users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Groups access" ON student_groups FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Students access" ON students FOR ALL USING (auth.uid() = "personalId");
@@ -155,3 +146,16 @@ CREATE POLICY "Workout items access" ON workout_items FOR ALL USING (
     AND workouts."personalId" = auth.uid()
   )
 );
+
+-- 4. RESTAURAR E GARANTIR PERMISSÕES PADRÃO DO POSTGREST DO SUPABASE
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- 5. RECARREGAR O CACHE DO POSTGREST API
+NOTIFY pgrst, 'reload schema';

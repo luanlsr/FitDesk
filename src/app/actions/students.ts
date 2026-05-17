@@ -1,45 +1,108 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requireAuth } from "@/lib/auth-session";
 import { studentService } from "@/services/studentService";
+import { auditService } from "@/services/auditService";
+import { createStudentSchema, updateStudentSchema, formatZodError } from "@/lib/schemas";
 import { revalidatePath } from "next/cache";
 
 export async function getStudents() {
-  const session = await auth();
-  if (!session?.user?.id) return [];
-
   try {
-    return await studentService.getAll(session.user.id);
-  } catch (error) {
-    console.error("Error fetching students:", error);
+    const { db, userId } = await requireAuth();
+    return await studentService.getAll(db, userId);
+  } catch {
     return [];
   }
 }
 
 export async function createStudent(formData: FormData) {
-  const session = await auth();
-  if (!session?.user?.id) return { success: false, error: "Não autorizado" };
-
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const planValue = parseFloat(formData.get("planValue") as string) || 0;
-  const paymentDay = parseInt(formData.get("paymentDay") as string) || 1;
-
   try {
-    await studentService.create({
-      name,
-      email,
-      phone,
-      planValue,
-      paymentDay,
-      personalId: session.user.id,
+    const { db, userId } = await requireAuth();
+
+    const parsed = createStudentSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email") || "",
+      phone: formData.get("phone") || "",
+      cpf: formData.get("cpf") || "",
+      gender: formData.get("gender") || undefined,
+      goal: formData.get("goal") || "",
+      planValue: parseFloat(formData.get("planValue") as string) || 0,
+      paymentDay: parseInt(formData.get("paymentDay") as string) || 1,
+      groupId: formData.get("groupId") || "",
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    const student = await studentService.create(db, { ...parsed.data, personalId: userId });
+    
+    await auditService.log(db, {
+      userId,
+      action: "student.create",
+      resourceId: student.id,
+      resourceType: "students",
+      metadata: { name: parsed.data.name }
     });
 
     revalidatePath("/alunos");
     return { success: true };
-  } catch (error) {
-    console.error("Error creating student:", error);
-    return { success: false, error: "Falha ao criar aluno" };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao criar aluno" };
+  }
+}
+
+export async function updateStudent(id: string, formData: FormData) {
+  try {
+    const { db, userId } = await requireAuth();
+
+    const parsed = updateStudentSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email") || "",
+      phone: formData.get("phone") || "",
+      cpf: formData.get("cpf") || "",
+      gender: formData.get("gender") || undefined,
+      goal: formData.get("goal") || "",
+      planValue: formData.get("planValue") ? parseFloat(formData.get("planValue") as string) : undefined,
+      paymentDay: formData.get("paymentDay") ? parseInt(formData.get("paymentDay") as string) : undefined,
+      groupId: formData.get("groupId") || "",
+    });
+
+    if (!parsed.success) {
+      return { success: false, error: formatZodError(parsed.error) };
+    }
+
+    await studentService.update(db, id, userId, parsed.data);
+
+    await auditService.log(db, {
+      userId,
+      action: "student.update",
+      resourceId: id,
+      resourceType: "students"
+    });
+
+    revalidatePath("/alunos");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao atualizar aluno" };
+  }
+}
+
+export async function deleteStudent(id: string) {
+  try {
+    const { db, userId } = await requireAuth();
+    await studentService.delete(db, id, userId);
+
+    await auditService.log(db, {
+      userId,
+      action: "student.delete",
+      resourceId: id,
+      resourceType: "students"
+    });
+
+    revalidatePath("/alunos");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao remover aluno" };
   }
 }

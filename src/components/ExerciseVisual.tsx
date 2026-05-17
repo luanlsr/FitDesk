@@ -12,24 +12,13 @@ interface ExerciseVisualProps {
 }
 
 export function ExerciseVisual({ imageUrl, videoUrl, className = "", animate = true }: ExerciseVisualProps) {
-  const [currentFrame, setCurrentFrame] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // Se tivermos as duas imagens, podemos alternar entre elas para simular animação
-  const frames = [imageUrl, videoUrl].filter(Boolean);
+  // Usa o GIF animado se existir, senão usa a imagem estática de fallback
+  const sourceUrl = animate && videoUrl ? videoUrl : (imageUrl || videoUrl);
 
-  useEffect(() => {
-    if (!animate || frames.length < 2) return;
-
-    const interval = setInterval(() => {
-      setCurrentFrame((prev) => (prev + 1) % frames.length);
-    }, 600); // Velocidade da animação
-
-    return () => clearInterval(interval);
-  }, [animate, frames.length]);
-
-  if (!imageUrl && !videoUrl) {
+  if (!sourceUrl) {
     return (
       <div className={`flex items-center justify-center bg-[#0A0A0B] rounded-2xl ${className}`}>
         <Dumbbell className="w-12 h-12 text-[#16161A]" />
@@ -41,14 +30,17 @@ export function ExerciseVisual({ imageUrl, videoUrl, className = "", animate = t
     <div className={`relative overflow-hidden bg-[#0A0A0B] flex items-center justify-center ${className}`}>
       <AnimatePresence mode="wait">
         <motion.img
-          key={frames[currentFrame]}
-          src={frames[currentFrame]}
-          initial={{ opacity: 0.5 }}
+          key={sourceUrl}
+          src={sourceUrl}
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0.5 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
           onLoad={() => setIsLoading(false)}
-          onError={() => setHasError(true)}
+          onError={() => {
+            setHasError(true);
+            setIsLoading(false);
+          }}
           className="w-full h-full object-contain"
           alt="Visual do exercício"
         />

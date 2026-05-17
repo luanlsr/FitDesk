@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const workoutService = {
-  async getAll(personalId: string, studentId?: string) {
-    let query = supabaseAdmin
+  async getAll(db: SupabaseClient, personalId: string, studentId?: string) {
+    let query = db
       .from("workouts")
       .select("*, student:students(name), exercises:workout_items(*, exercise:library_exercises(name))")
       .eq("personalId", personalId)
@@ -17,8 +17,8 @@ export const workoutService = {
     return data || [];
   },
 
-  async create(workoutData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, workoutData: any) {
+    const { data, error } = await db
       .from("workouts")
       .insert(workoutData)
       .select()
@@ -28,8 +28,8 @@ export const workoutService = {
     return data;
   },
 
-  async addExercise(workoutId: string, exerciseData: any) {
-    const { data, error } = await supabaseAdmin
+  async addExercise(db: SupabaseClient, workoutId: string, exerciseData: any) {
+    const { data, error } = await db
       .from("workout_items")
       .insert({ ...exerciseData, workoutId })
       .select()
@@ -39,8 +39,8 @@ export const workoutService = {
     return data;
   },
 
-  async delete(id: string, personalId: string) {
-    const { error } = await supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string) {
+    const { error } = await db
       .from("workouts")
       .delete()
       .eq("id", id)
@@ -48,5 +48,5 @@ export const workoutService = {
 
     if (error) throw error;
     return true;
-  }
+  },
 };

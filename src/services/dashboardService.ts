@@ -1,20 +1,15 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 
 export const dashboardService = {
-  async getPersonalStats(personalId: string) {
+  async getPersonalStats(db: SupabaseClient, personalId: string) {
     const start = startOfMonth(new Date());
     const end = endOfMonth(new Date());
 
-    const [students, appointments, finance, leads] = await Promise.all([
-      // 1. Alunos Ativos
-      supabaseAdmin.from("students").select("count").eq("personalId", personalId).eq("status", "Ativo"),
-      // 2. Aulas Realizadas/Agendadas no mês
-      supabaseAdmin.from("appointments").select("count").eq("personalId", personalId).gte("start", start.toISOString()).lte("end", end.toISOString()),
-      // 3. Receita Mensal
-      supabaseAdmin.from("financial_entries").select("amount").eq("personalId", personalId).eq("type", "IN").gte("date", start.toISOString()).lte("date", end.toISOString()),
-      // 4. Inadimplentes (Contagem simplificada)
-      supabaseAdmin.from("students").select("count").eq("personalId", personalId).eq("status", "Ativo")
+    const [students, appointments, finance] = await Promise.all([
+      db.from("students").select("count").eq("personalId", personalId).eq("status", "Ativo"),
+      db.from("appointments").select("count").eq("personalId", personalId).gte("start", start.toISOString()).lte("end", end.toISOString()),
+      db.from("financial_entries").select("amount").eq("personalId", personalId).eq("type", "IN").gte("date", start.toISOString()).lte("date", end.toISOString()),
     ]);
 
     const totalRevenue = finance.data?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
@@ -27,11 +22,11 @@ export const dashboardService = {
     ];
   },
 
-  async getTodayAgenda(personalId: string) {
+  async getTodayAgenda(db: SupabaseClient, personalId: string) {
     const start = startOfDay(new Date());
     const end = endOfDay(new Date());
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db
       .from("appointments")
       .select("*, student:students(name, groupId)")
       .eq("personalId", personalId)
@@ -43,8 +38,8 @@ export const dashboardService = {
     return data || [];
   },
 
-  async getRecentLeads(personalId: string) {
-    const { data, error } = await supabaseAdmin
+  async getRecentLeads(db: SupabaseClient, personalId: string) {
+    const { data, error } = await db
       .from("leads")
       .select("*")
       .eq("personalId", personalId)
@@ -53,5 +48,5 @@ export const dashboardService = {
 
     if (error) throw error;
     return data || [];
-  }
+  },
 };

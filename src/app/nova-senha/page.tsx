@@ -15,11 +15,8 @@ export default function NovaSenhaPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Escuta o evento de auth para confirmar que o usuário logou através do link de recuperação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        console.log("Recuperação de senha iniciada");
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Aguarda confirmação do link de recuperação de senha
     });
 
     return () => {

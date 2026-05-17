@@ -1,8 +1,8 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const studentService = {
-  async getAll(personalId: string) {
-    const { data, error } = await supabaseAdmin
+  async getAll(db: SupabaseClient, personalId: string) {
+    const { data, error } = await db
       .from("students")
       .select("*, group:student_groups(name, color)")
       .eq("personalId", personalId)
@@ -12,8 +12,8 @@ export const studentService = {
     return data || [];
   },
 
-  async getById(id: string, personalId: string) {
-    const { data, error } = await supabaseAdmin
+  async getById(db: SupabaseClient, id: string, personalId: string) {
+    const { data, error } = await db
       .from("students")
       .select("*")
       .eq("id", id)
@@ -24,8 +24,8 @@ export const studentService = {
     return data;
   },
 
-  async create(studentData: any) {
-    const { data, error } = await supabaseAdmin
+  async create(db: SupabaseClient, studentData: any) {
+    const { data, error } = await db
       .from("students")
       .insert(studentData)
       .select()
@@ -35,8 +35,8 @@ export const studentService = {
     return data;
   },
 
-  async update(id: string, personalId: string, updateData: any) {
-    const { data, error } = await supabaseAdmin
+  async update(db: SupabaseClient, id: string, personalId: string, updateData: any) {
+    const { data, error } = await db
       .from("students")
       .update(updateData)
       .eq("id", id)
@@ -48,8 +48,8 @@ export const studentService = {
     return data;
   },
 
-  async delete(id: string, personalId: string) {
-    const { error } = await supabaseAdmin
+  async delete(db: SupabaseClient, id: string, personalId: string) {
+    const { error } = await db
       .from("students")
       .delete()
       .eq("id", id)
@@ -57,5 +57,5 @@ export const studentService = {
 
     if (error) throw error;
     return true;
-  }
+  },
 };
