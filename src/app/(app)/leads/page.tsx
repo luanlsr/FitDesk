@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getLeads, createLead, updateLeadStatus, deleteLead } from "@/app/actions/leads";
+import { maskPhone } from "@/lib/utils";
 
 const columns = [
   { id: "Novo", label: "Novos Leads", color: "#64B5FF" },
@@ -166,7 +167,7 @@ export default function LeadsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[0.7rem] uppercase font-bold text-[#7A7A85] ml-1">Telefone</label>
-                  <input name="phone" className="w-full bg-[#0A0A0B] border border-[#222228] rounded-xl px-4 py-3 text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="(11) 9...." />
+                  <input name="phone" onChange={(e) => e.target.value = maskPhone(e.target.value)} className="w-full bg-[#0A0A0B] border border-[#222228] rounded-xl px-4 py-3 text-sm text-[#F5F5F0] outline-none focus:border-[#FF5C00]" placeholder="(11) 90000-0000" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[0.7rem] uppercase font-bold text-[#7A7A85] ml-1">Origem</label>

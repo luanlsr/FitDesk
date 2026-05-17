@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { getStudents, createStudent } from "@/app/actions/students";
 import { getStudentGroups } from "@/app/actions/groups";
 import ModalPortal from "@/components/ModalPortal";
+import { maskPhone } from "@/lib/utils";
 
 export default function AlunosPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -233,7 +234,7 @@ export default function AlunosPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[0.7rem] uppercase tracking-wider text-[#7A7A85] font-bold">WhatsApp</label>
-                      <input name="phone" className="w-full bg-[#0A0A0B] border border-[#222228] rounded-2xl px-4 py-4 text-sm text-[#F5F5F0] focus:border-[#FF5C00] outline-none transition-all" placeholder="(00) 00000-0000" />
+                      <input name="phone" onChange={(e) => e.target.value = maskPhone(e.target.value)} className="w-full bg-[#0A0A0B] border border-[#222228] rounded-2xl px-4 py-4 text-sm text-[#F5F5F0] focus:border-[#FF5C00] outline-none transition-all" placeholder="(00) 00000-0000" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[0.7rem] uppercase tracking-wider text-[#7A7A85] font-bold">E-mail</label>

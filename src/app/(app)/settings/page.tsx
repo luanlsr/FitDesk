@@ -17,6 +17,7 @@ import {
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { exportUserData, deleteUserAccount } from "@/app/actions/privacy";
+import { maskPhone } from "@/lib/utils";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -117,6 +118,7 @@ export default function SettingsPage() {
                   <input 
                     type="text" 
                     placeholder="(00) 00000-0000"
+                    onChange={(e) => e.target.value = maskPhone(e.target.value)}
                     className="w-full bg-[#0A0A0B] border border-[#222228] rounded-xl px-4 py-3 text-sm text-[#F5F5F0] focus:border-[#FF5C00] outline-none transition-all"
                   />
                 </div>

@@ -25,6 +25,7 @@ import {
 } from "@/app/actions/appointments";
 import { getStudents } from "@/app/actions/students";
 import ModalPortal from "@/components/ModalPortal";
+import { maskPhone } from "@/lib/utils";
 import { 
   format, 
   startOfWeek, 
@@ -654,7 +655,7 @@ export default function AgendaPage() {
                   {selectedEvent.student?.phone && (
                     <div className="flex items-center gap-3 text-[#CFCFC8]">
                       <User className="w-4 h-4 text-[#7A7A85]" />
-                      <span className="text-sm">{selectedEvent.student.phone}</span>
+                      <span className="text-sm">{maskPhone(selectedEvent.student.phone)}</span>
                     </div>
                   )}
                 </div>
