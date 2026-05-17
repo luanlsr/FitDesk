@@ -4,7 +4,7 @@ export const studentAppService = {
   async getProfile(associatedUserId: string) {
     const { data, error } = await supabaseAdmin
       .from("students")
-      .select("*, user:users!userId(name, image)")
+      .select("*, user:users!personalId(name, image)")
       .eq("associatedUserId", associatedUserId)
       .single();
 

@@ -58,4 +58,16 @@ export const studentService = {
     if (error) throw error;
     return true;
   },
+
+  async getActiveCount(db: SupabaseClient, personalId: string): Promise<number> {
+    const { count, error } = await db
+      .from("students")
+      .select("id", { count: "exact", head: true })
+      .eq("personalId", personalId)
+      .eq("status", "Ativo");
+
+    if (error) throw error;
+    return count || 0;
+  },
 };
+

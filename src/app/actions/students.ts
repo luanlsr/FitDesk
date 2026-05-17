@@ -35,6 +35,27 @@ export async function createStudent(formData: FormData) {
       return { success: false, error: formatZodError(parsed.error) };
     }
 
+    // Controle de Limites do Plano do Personal Trainer
+    const { data: personal, error: pError } = await db
+      .from("users")
+      .select("plan")
+      .eq("id", userId)
+      .single();
+
+    if (pError) throw new Error("Erro ao consultar plano do personal trainer.");
+
+    const plan = personal?.plan || "starter";
+    const limits: Record<string, number> = { starter: 10, pro: 50, studio: 999999 };
+    const limit = limits[plan] || 10;
+
+    const activeCount = await studentService.getActiveCount(db, userId);
+    if (activeCount >= limit) {
+      return { 
+        success: false, 
+        error: `Você atingiu o limite de ${limit} alunos ativos do seu plano ${plan.toUpperCase()}. Faça um upgrade na aba financeira para cadastrar mais alunos.` 
+      };
+    }
+
     const student = await studentService.create(db, { ...parsed.data, personalId: userId });
     
     await auditService.log(db, {

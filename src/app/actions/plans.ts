@@ -1,7 +1,8 @@
-﻿"use server";
+"use server";
 
 import { auth } from "@/auth";
 import { studentService } from "@/services/studentService";
+import { supabaseAdmin } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
 export async function updateStudentPlan(formData: FormData) {
@@ -13,7 +14,7 @@ export async function updateStudentPlan(formData: FormData) {
   const paymentDay = parseInt(formData.get("paymentDay") as string);
 
   try {
-    await studentService.update(id, session.user.id, { planValue, paymentDay });
+    await studentService.update(supabaseAdmin, id, session.user.id, { planValue, paymentDay });
     revalidatePath("/financeiro");
     return { success: true };
   } catch (error) {
