@@ -97,12 +97,12 @@ export default function DashboardSidebar() {
             </button>
           )}
           {mobile && (
-             <button
-                onClick={() => setIsMobileOpen(false)}
-                className="p-2 text-[#7A7A85] hover:text-[#F5F5F0]"
-             >
-                <X className="w-6 h-6" />
-             </button>
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="p-2 text-[#7A7A85] hover:text-[#F5F5F0]"
+            >
+              <X className="w-6 h-6" />
+            </button>
           )}
         </div>
 
@@ -119,7 +119,7 @@ export default function DashboardSidebar() {
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto no-scrollbar">
         {navItems.map((item) => (
           <Link
-            key={item.href}
+            key={`${item.label}-${item.href}`}
             href={item.href}
             className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${pathname === item.href
               ? "bg-[#FF5C00]/10 text-[#FF5C00] border border-[#FF5C00]/20"

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  BarChart3, 
-  Calendar, 
-  Users, 
-  Dumbbell, 
+import {
+  BarChart3,
+  Calendar,
+  Users,
+  Dumbbell,
   CircleDollarSign,
   MoreHorizontal,
   Library,
@@ -78,12 +78,11 @@ export default function MobileBottomNav() {
         {mainItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link 
-              key={item.href} 
+            <Link
+              key={`${item.label}-${item.href}`}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${
-                isActive ? "text-[#FF5C00]" : "text-[#7A7A85]"
-              }`}
+              className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${isActive ? "text-[#FF5C00]" : "text-[#7A7A85]"
+                }`}
             >
               <div className={`p-1 rounded-xl transition-all ${isActive ? "bg-[#FF5C00]/10" : ""}`}>
                 {item.icon}
@@ -96,11 +95,10 @@ export default function MobileBottomNav() {
         })}
 
         {!isStudent && (
-          <button 
+          <button
             onClick={() => setIsMenuOpen(true)}
-            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${
-              isMenuOpen ? "text-[#FF5C00]" : "text-[#7A7A85]"
-            }`}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${isMenuOpen ? "text-[#FF5C00]" : "text-[#7A7A85]"
+              }`}
           >
             <div className={`p-1 rounded-xl transition-all ${isMenuOpen ? "bg-[#FF5C00]/10" : ""}`}>
               <MoreHorizontal className="w-5 h-5" />
@@ -132,7 +130,7 @@ export default function MobileBottomNav() {
             >
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-lg font-bold text-[#F5F5F0]">Menu Adicional</h3>
-                <button 
+                <button
                   onClick={() => setIsMenuOpen(false)}
                   className="p-2 bg-[#16161A] rounded-xl text-[#7A7A85]"
                 >
@@ -143,19 +141,18 @@ export default function MobileBottomNav() {
               <div className="grid grid-cols-2 gap-4">
                 {moreItems.map((item) => (
                   <Link
-                    key={item.href}
+                    key={`${item.label}-${item.href}`}
                     href={item.href}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${
-                      pathname === item.href 
-                        ? "bg-[#FF5C00]/10 border-[#FF5C00]/30 text-[#FF5C00]" 
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${pathname === item.href
+                        ? "bg-[#FF5C00]/10 border-[#FF5C00]/30 text-[#FF5C00]"
                         : "bg-[#0A0A0B] border-[#222228] text-[#7A7A85]"
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     <span className="text-xs font-bold uppercase tracking-wider">{item.label}</span>
                   </Link>
                 ))}
-                
+
                 {/* Opções de Conta */}
                 <Link
                   href="/settings"
