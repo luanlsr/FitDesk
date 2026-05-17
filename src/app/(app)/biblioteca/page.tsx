@@ -18,6 +18,35 @@ import { ExerciseVisual } from "@/components/ExerciseVisual";
 
 const DEFAULT_CATEGORIES = ["Peito", "Costas", "Pernas", "Ombros", "Braços", "Core", "Cardio", "Mobilidade", "Alongamento"];
 
+function getNormalizedCategory(category: string): string {
+  if (!category) return "Outros";
+  const cat = category.toLowerCase().trim();
+  
+  if (cat === "peito" || cat === "chest") return "Peito";
+  if (cat === "costas" || cat === "back" || cat === "dorsais" || cat === "meio-das-costas") return "Costas";
+  if (cat === "ombros" || cat === "shoulders") return "Ombros";
+  if (cat === "braços" || cat === "triceps" || cat === "biceps" || cat === "antebracos" || cat === "arms" || cat === "braço" || cat === "braco") return "Braços";
+  if (
+    cat === "pernas" || 
+    cat === "quadriceps" || 
+    cat === "gluteos" || 
+    cat === "isquiotibiais" || 
+    cat === "panturrilhas" || 
+    cat === "abdutores" || 
+    cat === "adutores" || 
+    cat === "legs" || 
+    cat === "perna" || 
+    cat === "glúteos" || 
+    cat === "quadríceps"
+  ) return "Pernas";
+  if (cat === "core" || cat === "abdominais" || cat === "abs" || cat === "abdômen" || cat === "abdomen") return "Core";
+  if (cat === "cardio" || cat === "aeróbico") return "Cardio";
+  if (cat === "mobilidade" || cat === "flexibilidade") return "Mobilidade";
+  if (cat === "alongamento" || cat === "stretching") return "Alongamento";
+
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
 export default function BibliotecaPage() {
   const [exercises, setExercises] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,9 +56,9 @@ export default function BibliotecaPage() {
   const [selectedExercise, setSelectedExercise] = useState<any | null>(null);
   const [displayLimit, setDisplayLimit] = useState(24);
 
-  // Deriva dinamicamente as categorias unindo a lista padrão com as categorias cadastradas no banco
+  // Deriva dinamicamente as categorias unindo a lista padrão com as categorias normalizadas do banco
   const categories = useMemo(() => {
-    const dbCategories = exercises.map(ex => ex.category).filter(Boolean);
+    const dbCategories = exercises.map(ex => getNormalizedCategory(ex.category)).filter(Boolean);
     return Array.from(new Set([...DEFAULT_CATEGORIES, ...dbCategories]));
   }, [exercises]);
 
@@ -52,7 +81,8 @@ export default function BibliotecaPage() {
   const filteredExercises = useMemo(() => {
     return exercises.filter(ex => {
       const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !selectedCategory || ex.category === selectedCategory;
+      const normalizedExCat = getNormalizedCategory(ex.category);
+      const matchesCategory = !selectedCategory || normalizedExCat === selectedCategory;
       return matchesSearch && matchesCategory;
     });
   }, [exercises, searchTerm, selectedCategory]);
@@ -182,7 +212,7 @@ export default function BibliotecaPage() {
                 </div>
                 <div className="absolute bottom-3 left-3">
                   <span className="text-[0.6rem] bg-[#FF5C00] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    {ex.category}
+                    {getNormalizedCategory(ex.category)}
                   </span>
                 </div>
 
@@ -327,7 +357,7 @@ export default function BibliotecaPage() {
 
               <div className="absolute bottom-6 left-6">
                 <div className="bg-[#FF5C00] text-white text-[0.6rem] px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-2 inline-block">
-                  {selectedExercise.category}
+                  {getNormalizedCategory(selectedExercise.category)}
                 </div>
               </div>
             </div>
