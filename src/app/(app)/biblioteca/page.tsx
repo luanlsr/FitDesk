@@ -16,7 +16,7 @@ import { getLibraryExercises, createLibraryExercise, deleteLibraryExercise } fro
 import ModalPortal from "@/components/ModalPortal";
 import { ExerciseVisual } from "@/components/ExerciseVisual";
 
-const categories = ["Peito", "Costas", "Pernas", "Ombros", "Braços", "Core", "Cardio", "Mobilidade"];
+const DEFAULT_CATEGORIES = ["Peito", "Costas", "Pernas", "Ombros", "Braços", "Core", "Cardio", "Mobilidade", "Alongamento"];
 
 export default function BibliotecaPage() {
   const [exercises, setExercises] = useState<any[]>([]);
@@ -26,6 +26,12 @@ export default function BibliotecaPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<any | null>(null);
   const [displayLimit, setDisplayLimit] = useState(24);
+
+  // Deriva dinamicamente as categorias unindo a lista padrão com as categorias cadastradas no banco
+  const categories = useMemo(() => {
+    const dbCategories = exercises.map(ex => ex.category).filter(Boolean);
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...dbCategories]));
+  }, [exercises]);
 
   const fetchExercises = async () => {
     setIsLoading(true);
