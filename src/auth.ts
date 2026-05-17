@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const authSecret = process.env.AUTH_SECRET || "fallback-secret-for-nextauth-build-only-32-chars";
 
@@ -18,8 +18,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     Credentials({
+      name: "Login por E-mail",
+      credentials: {
+        email: { label: "E-mail", type: "email" },
+        password: { label: "Senha", type: "password" },
+        lgpdConsent: { label: "LGPD", type: "text" },
+      },
       async authorize(credentials) {
-        // Usa o client Anon nativo do Supabase como solicitado
+        if (!credentials?.email || !credentials?.password) {
+          console.error("[AuthDebug] Credenciais incompletas.");
+          return null;
+        }
+
+        const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -31,20 +42,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             password: credentials.password as string,
           });
 
-        if (authError || !authData.user) {
+        if (authError || !authData.user || !authData.session) {
           console.error("[AuthDebug] Erro no Supabase Auth:", authError?.message);
           return null;
         }
 
-        // Busca perfil público
-        const { data: profile } = await supabase
+        const accessToken = authData.session.access_token;
+        if (!accessToken) {
+          console.error("[AuthDebug] Supabase não retornou access token.");
+          return null;
+        }
+
+        const { data: profile, error } = await supabaseAdmin
           .from("users")
           .select("*")
           .eq("id", authData.user.id)
           .single();
 
-        if (!profile) {
-          console.error("[AuthDebug] Perfil público não encontrado.");
+        if (error || !profile) {
+          console.error("[AuthDebug] Perfil público não encontrado.", error?.message);
           return null;
         }
 
@@ -52,7 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const lgpdConsent = credentials.lgpdConsent === "true";
         if (lgpdConsent) {
-          await supabase.from('users').update({
+          await supabaseAdmin.from('users').update({
             lgpd_consent_at: new Date().toISOString(),
             lgpd_consent_version: 'v1.0'
           }).eq('id', profile.id);
@@ -61,8 +77,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: profile.id,
           name: profile.name,
-          email: profile.email,
+          email: profile.email || credentials.email,
           role: profile.role,
+          supabaseAccessToken: accessToken,
         };
       },
     }),
@@ -72,6 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.sub = user.id;
         token.role = (user as any).role;
+        token.supabaseAccessToken = (user as any).supabaseAccessToken;
       }
       return token;
     },
@@ -81,6 +99,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       if (token.role && session.user) {
         session.user.role = token.role as string;
+      }
+      if (token.supabaseAccessToken && session.user) {
+        session.user.supabaseAccessToken = token.supabaseAccessToken as string;
       }
       return session;
     },

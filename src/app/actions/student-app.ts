@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { supabaseAdmin } from "@/lib/supabase";
 import { studentAppService } from "@/services/studentAppService";
 
 export async function getMyStudentProfile() {
@@ -54,7 +55,7 @@ export async function updateStudentCardAction(creditCardToken: string) {
     if (!profile) return { success: false, error: "Perfil de aluno não encontrado." };
 
     const { supabaseAdmin } = await import("@/lib/supabase");
-    
+
     // Atualiza token de cartão no perfil do aluno no banco de dados local
     const { error } = await supabaseAdmin
       .from("students")
@@ -147,4 +148,182 @@ export async function scheduleStudentAppointment(startDateTime: string, descript
     return { success: false, error: error.message || "Erro ao agendar horário." };
   }
 }
+
+export async function getMyEvaluations() {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+
+  try {
+    const profile = await studentAppService.getProfile(session.user.id);
+    if (!profile) return [];
+
+    const { supabaseAdmin } = await import("@/lib/supabase");
+    const { data, error } = await supabaseAdmin
+      .from("evaluations")
+      .select("*")
+      .eq("studentId", profile.id)
+      .order("createdAt", { ascending: false });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const { decryptJSON } = await import("@/lib/encryption");
+
+    return data.map(item => ({
+      id: item.id,
+      studentId: item.studentId,
+      personalId: item.personalId,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      encryptedData: decryptJSON(item.encryptedData)
+    }));
+  } catch (error) {
+    console.error("Error fetching student evaluations:", error);
+    return [];
+  }
+}
+
+export async function getStudentDashboardData(studentId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, error: "Não autorizado." };
+
+  try {
+    const { supabaseAdmin } = await import("@/lib/supabase");
+
+    // 1. Buscar estudante
+    const { data: student, error: studentError } = await supabaseAdmin
+      .from("students")
+      .select("*, user:users!personalId(name, image)")
+      .eq("id", studentId)
+      .single();
+
+    if (studentError || !student) {
+      return { success: false, error: "Aluno não encontrado." };
+    }
+
+    // 2. Verificar autorização
+    // É o próprio aluno OR é o Personal Trainer dele
+    const isStudent = student.associatedUserId === session.user.id;
+    const isPersonal = student.personalId === session.user.id;
+
+    if (!isStudent && !isPersonal) {
+      return { success: false, error: "Você não tem permissão para visualizar este painel." };
+    }
+
+    // 3. Buscar treinos
+    const { data: workouts, error: workoutsError } = await supabaseAdmin
+      .from("workouts")
+      .select("*, exercises:workout_items(*, exercise:library_exercises(*))")
+      .eq("studentId", studentId)
+      .order("createdAt", { ascending: false });
+
+    // 4. Buscar próximo agendamento
+    const { data: nextApp, error: nextAppError } = await supabaseAdmin
+      .from("appointments")
+      .select("*")
+      .eq("studentId", studentId)
+      .gte("start", new Date().toISOString())
+      .eq("status", "Agendado")
+      .order("start", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    // 5. Buscar avaliações
+    const { data: evaluations, error: evaluationsError } = await supabaseAdmin
+      .from("evaluations")
+      .select("*")
+      .eq("studentId", studentId)
+      .order("createdAt", { ascending: false });
+
+    const decryptedEvaluations = evaluations ? evaluations.map(item => {
+      const { decryptJSON } = require("@/lib/encryption");
+      return {
+        id: item.id,
+        studentId: item.studentId,
+        personalId: item.personalId,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        encryptedData: decryptJSON(item.encryptedData)
+      };
+    }) : [];
+
+    return {
+      success: true,
+      profile: student,
+      workouts: workouts || [],
+      nextAppointment: nextApp || null,
+      evaluations: decryptedEvaluations
+    };
+  } catch (error: any) {
+    console.error("Erro ao carregar dados do painel do aluno:", error);
+    return { success: false, error: error.message || "Erro ao carregar dados." };
+  }
+}
+
+export async function logWorkoutCompletion(data: {
+  workoutId: string;
+  studentId: string;
+  personalId: string;
+  workoutName: string;
+  duration?: number;
+  feedback?: string;
+  details: any;
+}) {
+  try {
+    const { data: res, error } = await supabaseAdmin
+      .from("workout_logs")
+      .insert({
+        workoutId: data.workoutId,
+        studentId: data.studentId,
+        personalId: data.personalId,
+        workoutName: data.workoutName,
+        duration: data.duration || 0,
+        feedback: data.feedback || "",
+        details: data.details
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, logId: res.id };
+  } catch (error: any) {
+    console.error("Erro ao registrar conclusão de treino:", error);
+    return { success: false, error: error.message || "Erro ao registrar conclusão do treino." };
+  }
+}
+
+export async function getWorkoutLogs(studentId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("workout_logs")
+      .select("*")
+      .eq("studentId", studentId)
+      .order("completedAt", { ascending: false });
+
+    if (error) throw error;
+    return { success: true, logs: data || [] };
+  } catch (error: any) {
+    console.error("Erro ao carregar histórico de treinos:", error);
+    return { success: false, logs: [], error: error.message || "Erro ao carregar histórico." };
+  }
+}
+
+export async function getStudentAppointments(studentId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("appointments")
+      .select("*")
+      .eq("studentId", studentId)
+      .order("start", { ascending: true });
+
+    if (error) throw error;
+    return { success: true, appointments: data || [] };
+  } catch (error: any) {
+    console.error("Erro ao carregar agenda de aulas:", error);
+    return { success: false, appointments: [], error: error.message || "Erro ao carregar agenda." };
+  }
+}
+
+
+
 

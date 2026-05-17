@@ -4,7 +4,7 @@
 -- consentimento (LGPD Art. 8) na tabela users.
 -- ==========================================
 
-ALTER TABLE users 
+ALTER TABLE IF EXISTS public.users 
 ADD COLUMN IF NOT EXISTS "lgpd_consent_at" timestamp with time zone,
 ADD COLUMN IF NOT EXISTS "lgpd_consent_version" text;
 

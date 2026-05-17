@@ -18,7 +18,8 @@ import {
   Building2,
   Library,
   Menu,
-  X
+  X,
+  TrendingUp
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -31,12 +32,31 @@ export default function DashboardSidebar() {
   const { data: session } = useSession();
 
   const isMaster = session?.user?.role === "MASTER";
+  const isStudent = session?.user?.role === "STUDENT";
+  const [studentPath, setStudentPath] = useState<string>("");
+
+  useEffect(() => {
+    if (isStudent) {
+      async function fetchStudentRoute() {
+        const { getUserRoleAndRedirectPath } = await import("@/app/actions/loginRedirect");
+        const res = await getUserRoleAndRedirectPath();
+        if (res.path) {
+          setStudentPath(res.path);
+        }
+      }
+      fetchStudentRoute();
+    }
+  }, [isStudent]);
 
   const navItems = isMaster ? [
     { label: "Visão Geral", href: "/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
     { label: "Gestão Tenants", href: "/tenants", icon: <Building2 className="w-5 h-5" /> },
     { label: "Biblioteca Global", href: "/biblioteca", icon: <Library className="w-5 h-5" /> },
     { label: "Relatórios App", href: "/relatorios", icon: <FileText className="w-5 h-5" /> },
+  ] : isStudent ? [
+    { label: "Treinos", href: studentPath || "#", icon: <Dumbbell className="w-5 h-5" /> },
+    { label: "Agenda", href: studentPath ? `${studentPath}?openAgenda=true` : "#", icon: <Calendar className="w-5 h-5" /> },
+    { label: "Evolução", href: studentPath ? `${studentPath}?openEvolution=true` : "#", icon: <TrendingUp className="w-5 h-5" /> },
   ] : [
     { label: "Dashboard", href: "/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
     { label: "Agenda", href: "/agenda", icon: <Calendar className="w-5 h-5" /> },

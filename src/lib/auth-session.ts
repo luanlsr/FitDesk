@@ -17,7 +17,7 @@ export async function requireAuth() {
   // usamos Supabase como provedor de auth
   // Para forçar o RLS, passamos o token do usuário logado
   const accessToken =
-    (session as any).supabaseAccessToken ??
+    session.user?.supabaseAccessToken ??
     process.env.SUPABASE_SERVICE_ROLE_KEY!; // fallback temporário — será removido na Sprint 3
 
   const db = createSupabaseServerClient(accessToken);

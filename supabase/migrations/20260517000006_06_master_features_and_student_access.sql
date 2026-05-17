@@ -5,7 +5,7 @@
 -- ======================================================
 
 -- 1. ADICIONAR NOVAS COLUNAS NAS TABELAS EXISTENTES
-ALTER TABLE users 
+ALTER TABLE IF EXISTS public.users 
 ADD COLUMN IF NOT EXISTS "plan" text DEFAULT 'starter',
 ADD COLUMN IF NOT EXISTS "plan_status" text DEFAULT 'active',
 ADD COLUMN IF NOT EXISTS "username" text UNIQUE,
@@ -14,7 +14,7 @@ ADD COLUMN IF NOT EXISTS "asaas_subscription_id" text,
 ADD COLUMN IF NOT EXISTS "sales_plan_value" double precision DEFAULT 199.90,
 ADD COLUMN IF NOT EXISTS "sales_plan_description" text DEFAULT 'Consultoria Fitness Completa';
 
-ALTER TABLE students 
+ALTER TABLE IF EXISTS public.students 
 ADD COLUMN IF NOT EXISTS "asaas_customer_id" text,
 ADD COLUMN IF NOT EXISTS "asaas_subscription_id" text,
 ADD COLUMN IF NOT EXISTS "plan_status" text DEFAULT 'pending',
@@ -59,6 +59,8 @@ CREATE POLICY "Students self update access" ON students FOR UPDATE USING (auth.u
 
 -- 5.2 Workouts RLS
 DROP POLICY IF EXISTS "Workouts access" ON workouts;
+DROP POLICY IF EXISTS "Workouts personal access" ON workouts;
+DROP POLICY IF EXISTS "Workouts student access" ON workouts;
 CREATE POLICY "Workouts personal access" ON workouts FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Workouts student access" ON workouts FOR SELECT USING (
   EXISTS (
@@ -70,6 +72,8 @@ CREATE POLICY "Workouts student access" ON workouts FOR SELECT USING (
 
 -- 5.3 Workout Items RLS
 DROP POLICY IF EXISTS "Workout items access" ON workout_items;
+DROP POLICY IF EXISTS "Workout items personal access" ON workout_items;
+DROP POLICY IF EXISTS "Workout items student access" ON workout_items;
 CREATE POLICY "Workout items personal access" ON workout_items FOR ALL USING (
   EXISTS (
     SELECT 1 FROM workouts 
@@ -88,6 +92,8 @@ CREATE POLICY "Workout items student access" ON workout_items FOR SELECT USING (
 
 -- 5.4 Appointments RLS
 DROP POLICY IF EXISTS "Appointments access" ON appointments;
+DROP POLICY IF EXISTS "Appointments personal access" ON appointments;
+DROP POLICY IF EXISTS "Appointments student access" ON appointments;
 CREATE POLICY "Appointments personal access" ON appointments FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Appointments student access" ON appointments FOR ALL USING (
   EXISTS (
@@ -98,6 +104,8 @@ CREATE POLICY "Appointments student access" ON appointments FOR ALL USING (
 );
 
 -- 5.5 Anamneses RLS
+DROP POLICY IF EXISTS "Anamnese personal access" ON anamneses;
+DROP POLICY IF EXISTS "Anamnese student access" ON anamneses;
 CREATE POLICY "Anamnese personal access" ON anamneses FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Anamnese student access" ON anamneses FOR SELECT USING (
   EXISTS (
@@ -108,6 +116,8 @@ CREATE POLICY "Anamnese student access" ON anamneses FOR SELECT USING (
 );
 
 -- 5.6 Evaluations RLS
+DROP POLICY IF EXISTS "Evaluations personal access" ON evaluations;
+DROP POLICY IF EXISTS "Evaluations student access" ON evaluations;
 CREATE POLICY "Evaluations personal access" ON evaluations FOR ALL USING (auth.uid() = "personalId");
 CREATE POLICY "Evaluations student access" ON evaluations FOR SELECT USING (
   EXISTS (

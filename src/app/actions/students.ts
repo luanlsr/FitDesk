@@ -127,3 +127,14 @@ export async function deleteStudent(id: string) {
     return { success: false, error: error.message || "Falha ao remover aluno" };
   }
 }
+
+export async function getStudent(id: string) {
+  try {
+    const { db, userId } = await requireAuth();
+    const student = await studentService.getById(db, id, userId);
+    return { success: true, data: student };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Falha ao buscar aluno" };
+  }
+}
+

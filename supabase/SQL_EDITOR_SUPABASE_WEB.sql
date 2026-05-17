@@ -37,6 +37,7 @@ BEGIN
 END $$;
 
 -- Deleta tabelas públicas antigas
+DROP TABLE IF EXISTS workout_logs CASCADE;
 DROP TABLE IF EXISTS workout_items CASCADE;
 DROP TABLE IF EXISTS workouts CASCADE;
 DROP TABLE IF EXISTS library_exercises CASCADE;
@@ -175,6 +176,18 @@ CREATE TABLE workout_items (
   "createdAt" timestamp with time zone DEFAULT now()
 );
 
+CREATE TABLE workout_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  "workoutId" uuid NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+  "studentId" uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "workoutName" text NOT NULL,
+  "completedAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "duration" integer DEFAULT 0,
+  "feedback" text,
+  "details" jsonb NOT NULL
+);
+
 -- RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE student_groups ENABLE ROW LEVEL SECURITY;
@@ -185,6 +198,7 @@ ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE library_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workout_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_logs ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de RLS
 CREATE POLICY "Users access own profile" ON users FOR SELECT USING (auth.uid() = id);
@@ -202,6 +216,23 @@ CREATE POLICY "Workout items access" ON workout_items FOR ALL USING (
     AND workouts."personalId" = auth.uid()
   )
 );
+
+CREATE POLICY "Personal visualiza todos os logs de seus alunos" ON workout_logs FOR SELECT USING (auth.uid() = "personalId");
+CREATE POLICY "Aluno visualiza seus próprios logs" ON workout_logs FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = workout_logs."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+CREATE POLICY "Aluno insere seus próprios logs" ON workout_logs FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = workout_logs."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+CREATE POLICY "Personal insere logs para seus alunos" ON workout_logs FOR INSERT WITH CHECK (auth.uid() = "personalId");
 
 -- ==========================================
 -- PASSO 3: CONCENTIMENTO LGPD (04_add_consent_fields)

@@ -16,7 +16,8 @@ import {
   LogOut,
   X,
   Building2,
-  FileText
+  FileText,
+  TrendingUp
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -27,6 +28,21 @@ export default function MobileBottomNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: session } = useSession();
   const isMaster = session?.user?.role === "MASTER";
+  const isStudent = session?.user?.role === "STUDENT";
+  const [studentPath, setStudentPath] = useState<string>("");
+
+  useEffect(() => {
+    if (isStudent) {
+      async function fetchStudentRoute() {
+        const { getUserRoleAndRedirectPath } = await import("@/app/actions/loginRedirect");
+        const res = await getUserRoleAndRedirectPath();
+        if (res.path) {
+          setStudentPath(res.path);
+        }
+      }
+      fetchStudentRoute();
+    }
+  }, [isStudent]);
 
   // Fecha o menu ao mudar de rota
   useEffect(() => {
@@ -38,6 +54,10 @@ export default function MobileBottomNav() {
     { label: "Tenants", href: "/tenants", icon: <Building2 className="w-5 h-5" /> },
     { label: "Lib", href: "/biblioteca", icon: <Library className="w-5 h-5" /> },
     { label: "Relatórios", href: "/relatorios", icon: <FileText className="w-5 h-5" /> },
+  ] : isStudent ? [
+    { label: "Treinos", href: studentPath || "#", icon: <Dumbbell className="w-5 h-5" /> },
+    { label: "Agenda", href: studentPath ? `${studentPath}?openAgenda=true` : "#", icon: <Calendar className="w-5 h-5" /> },
+    { label: "Evolução", href: studentPath ? `${studentPath}?openEvolution=true` : "#", icon: <TrendingUp className="w-5 h-5" /> },
   ] : [
     { label: "Home", href: "/dashboard", icon: <BarChart3 className="w-5 h-5" /> },
     { label: "Agenda", href: "/agenda", icon: <Calendar className="w-5 h-5" /> },
@@ -45,7 +65,7 @@ export default function MobileBottomNav() {
     { label: "Treinos", href: "/treinos", icon: <Dumbbell className="w-5 h-5" /> },
   ];
 
-  const moreItems = isMaster ? [] : [
+  const moreItems = isMaster ? [] : isStudent ? [] : [
     { label: "Biblioteca", href: "/biblioteca", icon: <Library className="w-5 h-5" /> },
     { label: "Leads", href: "/leads", icon: <UserPlus2 className="w-5 h-5" /> },
     { label: "Financeiro", href: "/financeiro", icon: <CircleDollarSign className="w-5 h-5" /> },
@@ -75,19 +95,21 @@ export default function MobileBottomNav() {
           );
         })}
 
-        <button 
-          onClick={() => setIsMenuOpen(true)}
-          className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${
-            isMenuOpen ? "text-[#FF5C00]" : "text-[#7A7A85]"
-          }`}
-        >
-          <div className={`p-1 rounded-xl transition-all ${isMenuOpen ? "bg-[#FF5C00]/10" : ""}`}>
-            <MoreHorizontal className="w-5 h-5" />
-          </div>
-          <span className="text-[0.6rem] font-bold uppercase tracking-tighter">
-            Mais
-          </span>
-        </button>
+        {!isStudent && (
+          <button 
+            onClick={() => setIsMenuOpen(true)}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-all ${
+              isMenuOpen ? "text-[#FF5C00]" : "text-[#7A7A85]"
+            }`}
+          >
+            <div className={`p-1 rounded-xl transition-all ${isMenuOpen ? "bg-[#FF5C00]/10" : ""}`}>
+              <MoreHorizontal className="w-5 h-5" />
+            </div>
+            <span className="text-[0.6rem] font-bold uppercase tracking-tighter">
+              Mais
+            </span>
+          </button>
+        )}
       </nav>
 
       {/* Menu Overlay "Mais" */}

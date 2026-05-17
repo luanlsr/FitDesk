@@ -22,7 +22,6 @@ export default function LoginPage() {
       setError("Você precisa aceitar os termos de tratamento de dados.");
       return;
     }
-
     try {
       const result = await signIn("credentials", {
         email,
@@ -34,7 +33,9 @@ export default function LoginPage() {
       if (result?.error) {
         setError("E-mail ou senha incorretos.");
       } else {
-        router.push("/dashboard");
+        const { getUserRoleAndRedirectPath } = await import("../actions/loginRedirect");
+        const redirectRes = await getUserRoleAndRedirectPath();
+        router.push(redirectRes.path || "/dashboard");
       }
     } catch (err) {
       setError("Ocorreu um erro ao tentar entrar. Tente novamente.");

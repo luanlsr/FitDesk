@@ -7,27 +7,29 @@
 -- Garante que a extensão pgcrypto está disponível no schema público ou de busca
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-
 -- =========================================================================
--- ATENÇÃO CRÍTICA: NÃO INSIRA DIRETAMENTE NA TABELA auth.users!
--- Inserções diretas com gen_salt() causam erros de hash de senha no GoTrue 
--- moderno e podem gerar "Database error querying schema" caso colunas fiquem nulas.
+-- ATENÇÃO CRÍTICA: CRIAÇÃO DE USUÁRIOS NO AUTH
 -- 
--- PARA POPULAR USUÁRIOS DE TESTE, RODE O SCRIPT OFICIAL NO TERMINAL:
--- node supabase/scripts/02_seed_auth_users.mjs
+-- Os usuários NO AUTHENTICATION devem ser criados via script Node.js:
+-- node supabase/scripts/seed-auth-users.mjs
+--
+-- ESTE SCRIPT APENAS INSERE NO public.users APÓS o auth estar populado.
+-- O ID dos usuários em public.users DEVE CORRESPONDER AO ID EM auth.users
 -- =========================================================================
 
--- Os inserts diretos em auth.users e auth.identities foram abolidos para 
--- manter a integridade do schema nativo do Supabase Auth.
--- A partir de agora, o seed público se encarrega apenas de criar 
--- conteúdos do sistema.
+-- IMPORTANTE: Execute o script de auth ANTES de rodar este seed!
+-- Senão as foreign keys falharão.
 
-INSERT INTO public.users (id, name, email, password, role) VALUES 
-  ('e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', 'Admin Master', 'master@fitdesk.com.br', crypt('master123', gen_salt('bf', 10)), 'MASTER'),
-  ('f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', 'Michel Personal', 'michel@emailteste.com', crypt('123456', gen_salt('bf', 10)), 'PERSONAL'),
-  ('c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', 'Ana Trainer', 'ana@emailteste.com', crypt('123456', gen_salt('bf', 10)), 'PERSONAL')
+-- 1. USUÁRIOS NO SCHEMA PUBLIC (vinculados ao auth.users via ID)
+-- Estes dados são sincronizados pelo seed-auth-users.mjs
+INSERT INTO public.users (id, name, email, role) VALUES 
+  ('e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', 'Admin Master', 'master@fitdesk.com.br', 'MASTER'),
+  ('f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', 'Michel Personal', 'michel@emailteste.com', 'PERSONAL'),
+  ('c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', 'Ana Trainer', 'ana@emailteste.com', 'PERSONAL')
 ON CONFLICT (id) DO UPDATE SET 
-  password = EXCLUDED.password;
+  name = EXCLUDED.name,
+  email = EXCLUDED.email,
+  role = EXCLUDED.role;
 
 -- 4. GRUPOS DE ESTUDANTES
 INSERT INTO student_groups (id, name, description, color, "personalId") VALUES

@@ -14,37 +14,60 @@ import {
   LogOut,
   X,
   Scale,
-  Activity
+  Activity,
+  Lock,
+  ArrowLeft
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getMyStudentProfile, getMyWorkouts, getMyNextAppointment, getMyEvaluations } from "@/app/actions/student-app";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 
-export default function AlunoDashboard() {
+interface Props {
+  personalUsername: string;
+  studentId: string;
+}
+
+export default function AlunoDashboardDynamic({ personalUsername, studentId }: Props) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [nextApp, setNextApp] = useState<any>(null);
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isEvolutionOpen, setIsEvolutionOpen] = useState(false);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
     async function fetchData() {
-      const [p, w, n, evs] = await Promise.all([
-        getMyStudentProfile(),
-        getMyWorkouts(),
-        getMyNextAppointment(),
-        getMyEvaluations()
-      ]);
-      setProfile(p);
-      setWorkouts(w);
-      setNextApp(n);
-      setEvaluations(evs);
-      setLoading(false);
+      try {
+        const { getStudentDashboardData } = await import("@/app/actions/student-app");
+        const res = await getStudentDashboardData(studentId);
+        if (res.success) {
+          setProfile(res.profile);
+          setWorkouts(res.workouts || []);
+          setNextApp(res.nextAppointment);
+          setEvaluations(res.evaluations || []);
+        } else {
+          setErrorMsg(res.error || "Erro ao carregar dados.");
+        }
+      } catch (err) {
+        setErrorMsg("Falha ao comunicar com o servidor.");
+      } finally {
+        setLoading(false);
+      }
     }
     fetchData();
-  }, []);
+  }, [studentId]);
 
   if (loading) {
     return (
@@ -54,31 +77,72 @@ export default function AlunoDashboard() {
     );
   }
 
-  if (!profile) {
+  if (errorMsg || !profile) {
     return (
-      <div className="p-8 text-center bg-[#0A0A0B] min-h-screen flex flex-col items-center justify-center">
-        <div className="bg-[#16161A] p-8 rounded-3xl border border-[#222228] max-w-sm">
-          <User className="w-12 h-12 text-[#7A7A85] mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-[#F5F5F0] mb-2">Perfil não vinculado</h1>
-          <p className="text-sm text-[#7A7A85] mb-6">Peça ao seu personal trainer para vincular este e-mail ao seu perfil de aluno.</p>
+      <div className="p-8 text-center bg-[#0A0A0B] min-h-screen flex flex-col items-center justify-center text-[#F5F5F0]">
+        <div className="bg-[#16161A] p-8 rounded-3xl border border-[#222228] max-w-sm space-y-4">
+          <X className="w-12 h-12 text-[#FF4444] mx-auto" />
+          <h1 className="text-xl font-bold">{errorMsg || "Acesso negado"}</h1>
+          <p className="text-sm text-[#7A7A85]">Você não possui permissão para acessar esta área ou o aluno não foi encontrado.</p>
+          <button
+            onClick={() => window.history.back()}
+            className="w-full py-3 bg-[#222228] border border-[#33333E] hover:border-[#FF5C00] text-xs font-bold rounded-xl transition-all cursor-pointer"
+          >
+            Voltar
+          </button>
         </div>
       </div>
     );
   }
 
+  const isPersonalViewing = session?.user?.id === profile.personalId;
+
   return (
-    <div className="bg-[#0A0A0B] min-h-screen p-4 md:p-8 space-y-6 max-w-2xl mx-auto pb-28 relative">
+    <div className="bg-[#0A0A0B] min-h-screen p-4 md:p-8 space-y-6 max-w-2xl mx-auto pb-28 relative text-[#F5F5F0]">
+      {/* Visualização de Personal Banner */}
+      {isPersonalViewing && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#FF5C00]/10 border border-[#FF5C00]/20 text-[#FF5C00] px-5 py-4 rounded-3xl text-xs font-bold flex items-center justify-between shadow-lg select-none"
+        >
+          <span className="flex items-center gap-2">
+            <Lock className="w-4 h-4 shrink-0" />
+            Visualizando como Personal Trainer
+          </span>
+          <Link
+            href={`/alunos/${studentId}`}
+            className="px-3 py-1.5 bg-[#FF5C00] hover:bg-[#FF7A2E] text-white font-extrabold rounded-lg transition-all text-[0.65rem] uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-md shadow-[#FF5C00]/10"
+          >
+            <ArrowLeft className="w-3 h-3" /> Sair da Pré-visualização
+          </Link>
+        </motion.div>
+      )}
+
       {/* Header Profile */}
-      <header className="flex items-center gap-4 bg-[#16161A] border border-[#222228] p-5 rounded-3xl shadow-xl">
-        <div className="w-16 h-16 bg-[#FF5C00]/20 rounded-2xl flex items-center justify-center font-bold text-2xl text-[#FF5C00]">
-          {profile.name?.[0]}
+      <header className="flex items-center justify-between bg-[#16161A] border border-[#222228] p-5 rounded-3xl shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-[#FF5C00]/20 rounded-2xl flex items-center justify-center font-bold text-2xl text-[#FF5C00] select-none">
+            {profile.name?.[0]}
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[#F5F5F0]">{profile.name}</h1>
+            <p className="text-xs text-[#7A7A85] flex items-center gap-1.5 mt-0.5">
+              <User className="w-3 h-3" /> Personal: {profile.user?.name}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-[#F5F5F0]">{profile.name}</h1>
-          <p className="text-xs text-[#7A7A85] flex items-center gap-1">
-            <User className="w-3 h-3" /> Personal: {profile.user?.name}
-          </p>
-        </div>
+
+        {/* Logout (Only if student is the actual logged-in user) */}
+        {!isPersonalViewing && (
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="p-3 bg-[#222228]/50 hover:bg-[#FF4444]/10 border border-[#222228] hover:border-[#FF4444]/30 rounded-2xl text-[#7A7A85] hover:text-[#FF4444] transition-all cursor-pointer"
+            title="Sair da Conta"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        )}
       </header>
 
       {/* Próximo Agendamento */}
@@ -86,7 +150,7 @@ export default function AlunoDashboard() {
         <section className="bg-gradient-to-r from-[#FF5C00] to-[#FF7A2E] p-6 rounded-3xl shadow-[0_0_30px_rgba(255,92,0,0.1)] relative overflow-hidden group">
           <div className="relative z-10 flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#0A0A0B]/60">Próxima Aula</span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#0A0A0B]/60 font-bebas">Próxima Aula</span>
               <h2 className="text-2xl font-bold text-white">{format(new Date(nextApp.start), "HH:mm")}</h2>
               <p className="text-sm font-semibold text-white/90">{format(new Date(nextApp.start), "eeee, dd 'de' MMMM", { locale: ptBR })}</p>
             </div>
@@ -96,8 +160,8 @@ export default function AlunoDashboard() {
         </section>
       ) : (
         <section className="bg-[#16161A] border border-[#222228] p-6 rounded-3xl text-center">
-            <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#7A7A85]">Próxima Aula</span>
-            <p className="text-[#333338] text-sm mt-2 italic">Nenhuma marcada.</p>
+            <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#7A7A85] block font-mono">Próxima Aula</span>
+            <p className="text-[#333338] text-sm mt-2 italic font-medium">Nenhuma marcada.</p>
         </section>
       )}
 
@@ -108,7 +172,7 @@ export default function AlunoDashboard() {
           {workouts.length === 0 ? (
             <div className="text-center py-10 bg-[#16161A] border-dashed border-2 border-[#222228] rounded-3xl">
               <Dumbbell className="w-8 h-8 text-[#222228] mx-auto mb-2" />
-              <p className="text-[#333338] text-sm">Seu personal ainda não liberou sua ficha.</p>
+              <p className="text-[#333338] text-sm">Seu personal ainda não liberou sua ficha de treinos.</p>
             </div>
           ) : (
             workouts.map((workout: any) => (
@@ -152,7 +216,7 @@ export default function AlunoDashboard() {
             <TrendingUp className="w-5 h-5 text-[#00E676] group-hover:scale-110 transition-transform" />
             <div>
                 <p className="text-xs font-bold text-[#F5F5F0] group-hover:text-[#FF5C00] transition-colors">Minha Evolução</p>
-                <p className="text-[0.65rem] text-[#7A7A85]">Ver histórico de medidas e peso.</p>
+                <p className="text-[0.65rem] text-[#7A7A85]">Ver histórico de medidas e peso corporal.</p>
             </div>
         </div>
         <ChevronRight className="w-5 h-5 text-[#333338] group-hover:text-[#FF5C00] transition-colors" />
@@ -214,14 +278,14 @@ export default function AlunoDashboard() {
 
                           return (
                             <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
-                              <div className="text-[0.6rem] text-[#F5F5F0] font-bold opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-[#111114] px-1 py-0.5 rounded border border-[#222228] select-none">
+                              <div className="text-[0.6rem] text-[#F5F5F0] font-bold opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-[#111114] px-1 py-0.5 rounded border border-[#222228] select-none font-mono">
                                 {data.weight}kg
                               </div>
                               <div 
                                 className="w-full bg-gradient-to-t from-[#FF5C00]/40 to-[#FF5C00] rounded-t-md group-hover:brightness-125 transition-all relative"
                                 style={{ height: `${heightPercent}%` }}
                               ></div>
-                              <span className="text-[0.55rem] text-[#7A7A85] font-bold mt-1">{dateStr}</span>
+                              <span className="text-[0.55rem] text-[#7A7A85] font-bold mt-1 font-mono">{dateStr}</span>
                             </div>
                           );
                         })}
@@ -244,15 +308,15 @@ export default function AlunoDashboard() {
                           const dateStr = new Date(ev.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 
                           return (
-                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end">
-                              <div className="text-[0.6rem] text-[#00E676] font-bold opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-[#111114] px-1 py-0.5 rounded border border-[#222228] select-none">
+                            <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end font-mono">
+                              <div className="text-[0.6rem] text-[#00E676] font-bold opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-[#111114] px-1 py-0.5 rounded border border-[#222228] select-none font-mono">
                                 {bf}%
                               </div>
                               <div 
                                 className="w-full bg-gradient-to-t from-[#00E676]/40 to-[#00E676] rounded-t-md group-hover:brightness-125 transition-all"
                                 style={{ height: `${heightPercent}%` }}
                               ></div>
-                              <span className="text-[0.55rem] text-[#7A7A85] font-bold mt-1">{dateStr}</span>
+                              <span className="text-[0.55rem] text-[#7A7A85] font-bold mt-1 font-mono">{dateStr}</span>
                             </div>
                           );
                         })}
@@ -263,7 +327,7 @@ export default function AlunoDashboard() {
                   <div className="text-center py-12 text-[#7A7A85]">
                     <Scale className="w-12 h-12 mx-auto text-[#222228] mb-3" />
                     <h4 className="text-sm font-bold text-[#F5F5F0] mb-1">Nenhum dado cadastrado</h4>
-                    <p className="text-xs max-w-xs mx-auto">Seu personal trainer fará sua avaliação antropométrica para gerar seus gráficos de progresso.</p>
+                    <p className="text-xs max-w-xs mx-auto">Sua avaliação física antropométrica fará seus gráficos de progresso aparecerem aqui.</p>
                   </div>
                 )}
 

@@ -2,6 +2,7 @@
 -- FitDesk - Migration: 01_drop_all
 -- Descrição: Limpeza total e agressiva de tabelas,
 -- views, funções customizadas e dados de teste.
+-- Remove TODO o banco inclusive auth em cascata.
 -- ==========================================
 
 -- 1. DELETAR TODAS AS VIEWS DO SCHEMA PUBLIC (Evita conflitos de dependências)
@@ -33,6 +34,9 @@ BEGIN
 END $$;
 
 -- 3. DELETAR TODAS AS TABELAS DO SCHEMA PUBLIC (Limpeza completa do modelo)
+DROP TABLE IF EXISTS workout_logs CASCADE;
+DROP TABLE IF EXISTS evaluations CASCADE;
+DROP TABLE IF EXISTS anamneses CASCADE;
 DROP TABLE IF EXISTS workout_items CASCADE;
 DROP TABLE IF EXISTS workouts CASCADE;
 DROP TABLE IF EXISTS library_exercises CASCADE;
@@ -47,11 +51,27 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS verification_tokens CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
 
--- 4. LIMPAR USUÁRIOS DE TESTE DO SCHEMA AUTH PELO E-MAIL (Evita chaves duplicadas no auth.users)
-DELETE FROM auth.identities WHERE user_id IN (
-  SELECT id FROM auth.users WHERE email IN ('master@fitdesk.com.br', 'michel@emailteste.com', 'ana@emailteste.com')
-);
-DELETE FROM auth.users WHERE email IN ('master@fitdesk.com.br', 'michel@emailteste.com', 'ana@emailteste.com');
+-- 4. DELETAR TODOS OS USUÁRIOS DO AUTH EM CASCATA
+-- Remove identidades primeiro para evitar constraint violations
+DELETE FROM auth.identities;
+
+-- Remove todos os usuarios do auth (sem filtro - limpa tudo)
+DELETE FROM auth.users;
+
+-- 5. RESTAURAR E GARANTIR PERMISSÕES PADRÃO DO POSTGREST
+-- Isso garante que a próxima migração possa criar tabelas e fazer ALTER com sucesso
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL PRIVILEGES ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- Notifica o PostgREST para recarregar schema
+NOTIFY pgrst, 'reload schema';
+
 -- ==========================================
 -- FitDesk - Migration: 02_create_extensions
 -- Descrição: Configuração e permissões do schema
@@ -79,7 +99,7 @@ NOTIFY pgrst, 'reload schema';
 
 -- 1. CRIAÇÃO DAS TABELAS DO BANCO DE DADOS
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS public.users (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text,
   email text UNIQUE,
@@ -91,16 +111,16 @@ CREATE TABLE users (
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE student_groups (
+CREATE TABLE IF NOT EXISTS public.student_groups (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   description text,
   color text DEFAULT '#3b82f6',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS public.students (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   cpf text,
@@ -113,40 +133,40 @@ CREATE TABLE students (
   "startDate" timestamp with time zone DEFAULT now(),
   "paymentDay" integer,
   "planValue" double precision,
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "groupId" uuid REFERENCES student_groups(id) ON DELETE SET NULL,
-  "associatedUserId" uuid REFERENCES users(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "groupId" uuid REFERENCES public.student_groups(id) ON DELETE SET NULL,
+  "associatedUserId" uuid REFERENCES public.users(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS public.appointments (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   title text NOT NULL,
   description text,
   start timestamp with time zone NOT NULL,
   "end" timestamp with time zone NOT NULL,
   status text DEFAULT 'Agendado',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "studentId" uuid REFERENCES students(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "studentId" uuid REFERENCES public.students(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE financial_entries (
+CREATE TABLE IF NOT EXISTS public.financial_entries (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   description text NOT NULL,
   amount double precision NOT NULL,
   type text NOT NULL,
   category text NOT NULL,
   date timestamp with time zone DEFAULT now(),
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "studentId" uuid REFERENCES students(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "studentId" uuid REFERENCES public.students(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE leads (
+CREATE TABLE IF NOT EXISTS public.leads (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   email text,
@@ -154,37 +174,37 @@ CREATE TABLE leads (
   origin text,
   value double precision DEFAULT 0,
   status text DEFAULT 'Aguardando',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE library_exercises (
+CREATE TABLE IF NOT EXISTS public.library_exercises (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   category text NOT NULL,
   "videoUrl" text,
   "imageUrl" text,
   description text,
-  "personalId" uuid REFERENCES users(id) ON DELETE SET NULL,
+  "personalId" uuid REFERENCES public.users(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE workouts (
+CREATE TABLE IF NOT EXISTS public.workouts (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   description text,
-  "studentId" uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "studentId" uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE workout_items (
+CREATE TABLE IF NOT EXISTS public.workout_items (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  "workoutId" uuid NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
-  "exerciseId" uuid NOT NULL REFERENCES library_exercises(id) ON DELETE CASCADE,
+  "workoutId" uuid NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
+  "exerciseId" uuid NOT NULL REFERENCES public.library_exercises(id) ON DELETE CASCADE,
   sets integer NOT NULL,
   reps text NOT NULL,
   weight text,
@@ -193,30 +213,30 @@ CREATE TABLE workout_items (
 );
 
 -- 2. HABILITAÇÃO DO ROW LEVEL SECURITY (RLS) EM TODAS AS TABELAS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE student_groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE financial_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE library_exercises ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workout_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.student_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.financial_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.library_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.workouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.workout_items ENABLE ROW LEVEL SECURITY;
 
 -- 3. POLÍTICAS DE CONTROLE DE ACESSO (SEGURANÇA DO TENANT)
-CREATE POLICY "Users access own profile" ON users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Groups access" ON student_groups FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Students access" ON students FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Appointments access" ON appointments FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Financial access" ON financial_entries FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Leads access" ON leads FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Workouts access" ON workouts FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Exercises access" ON library_exercises FOR ALL USING (auth.uid() = "personalId" OR "personalId" IS NULL);
-CREATE POLICY "Workout items access" ON workout_items FOR ALL USING (
+CREATE POLICY "Users access own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Groups access" ON public.student_groups FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Students access" ON public.students FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Appointments access" ON public.appointments FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Financial access" ON public.financial_entries FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Leads access" ON public.leads FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Workouts access" ON public.workouts FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Exercises access" ON public.library_exercises FOR ALL USING (auth.uid() = "personalId" OR "personalId" IS NULL);
+CREATE POLICY "Workout items access" ON public.workout_items FOR ALL USING (
   EXISTS (
-    SELECT 1 FROM workouts 
-    WHERE workouts.id = workout_items."workoutId" 
-    AND workouts."personalId" = auth.uid()
+    SELECT 1 FROM public.workouts 
+    WHERE public.workouts.id = public.workout_items."workoutId" 
+    AND public.workouts."personalId" = auth.uid()
   )
 );
 
@@ -238,7 +258,7 @@ NOTIFY pgrst, 'reload schema';
 -- consentimento (LGPD Art. 8) na tabela users.
 -- ==========================================
 
-ALTER TABLE users 
+ALTER TABLE IF EXISTS public.users 
 ADD COLUMN IF NOT EXISTS "lgpd_consent_at" timestamp with time zone,
 ADD COLUMN IF NOT EXISTS "lgpd_consent_version" text;
 
@@ -277,6 +297,196 @@ WITH CHECK (auth.uid() = "userId");
 
 -- Notifica o PostgREST para atualizar o schema cache
 NOTIFY pgrst, 'reload schema';
+-- ======================================================
+-- FitDesk - Migration: 06_master_features_and_student_access
+-- Descrição: Expansão do schema para suporte a multi-planos,
+-- assinaturas de alunos (Asaas), anamneses e avaliações.
+-- ======================================================
+
+-- 1. ADICIONAR NOVAS COLUNAS NAS TABELAS EXISTENTES
+ALTER TABLE IF EXISTS public.users 
+ADD COLUMN IF NOT EXISTS "plan" text DEFAULT 'starter',
+ADD COLUMN IF NOT EXISTS "plan_status" text DEFAULT 'active',
+ADD COLUMN IF NOT EXISTS "username" text UNIQUE,
+ADD COLUMN IF NOT EXISTS "asaas_customer_id" text,
+ADD COLUMN IF NOT EXISTS "asaas_subscription_id" text,
+ADD COLUMN IF NOT EXISTS "sales_plan_value" double precision DEFAULT 199.90,
+ADD COLUMN IF NOT EXISTS "sales_plan_description" text DEFAULT 'Consultoria Fitness Completa';
+
+ALTER TABLE IF EXISTS public.students 
+ADD COLUMN IF NOT EXISTS "asaas_customer_id" text,
+ADD COLUMN IF NOT EXISTS "asaas_subscription_id" text,
+ADD COLUMN IF NOT EXISTS "plan_status" text DEFAULT 'pending',
+ADD COLUMN IF NOT EXISTS "plan_name" text DEFAULT 'Mensal',
+ADD COLUMN IF NOT EXISTS "asaas_card_token" text;
+
+-- 2. CRIAR TABELA DE ANAMNESES (CRIPTOGRAFIA DE DADOS SENSÍVEIS NA APLICAÇÃO)
+CREATE TABLE IF NOT EXISTS anamneses (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  "studentId" uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "encryptedData" text NOT NULL, -- Dados médicos e pessoais em JSON AES-256-GCM
+  "createdAt" timestamp with time zone DEFAULT now(),
+  "updatedAt" timestamp with time zone DEFAULT now()
+);
+
+-- 3. CRIAR TABELA DE AVALIAÇÕES (FÍSICA, NEUROMOTORA E POSTURAL)
+CREATE TABLE IF NOT EXISTS evaluations (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  "studentId" uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "encryptedData" text NOT NULL, -- Perímetros, dobras cutâneas, desvios e testes em JSON AES-256-GCM
+  "createdAt" timestamp with time zone DEFAULT now(),
+  "updatedAt" timestamp with time zone DEFAULT now()
+);
+
+-- 4. HABILITAR RLS NAS NOVAS TABELAS
+ALTER TABLE anamneses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE evaluations ENABLE ROW LEVEL SECURITY;
+
+-- 5. ATUALIZAR E CRIAR APÓLICES DE SEGURANÇA RLS PARA OS ALUNOS
+-- Como os alunos agora acessam a plataforma, precisamos permitir que leiam e editem dados específicos deles.
+
+-- 5.1 Students RLS
+DROP POLICY IF EXISTS "Students access" ON students;
+DROP POLICY IF EXISTS "Students self access" ON students;
+DROP POLICY IF EXISTS "Students self select access" ON students;
+DROP POLICY IF EXISTS "Students self update access" ON students;
+CREATE POLICY "Students personal access" ON students FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Students self select access" ON students FOR SELECT USING (auth.uid() = "associatedUserId");
+CREATE POLICY "Students self update access" ON students FOR UPDATE USING (auth.uid() = "associatedUserId");
+
+-- 5.2 Workouts RLS
+DROP POLICY IF EXISTS "Workouts access" ON workouts;
+DROP POLICY IF EXISTS "Workouts personal access" ON workouts;
+DROP POLICY IF EXISTS "Workouts student access" ON workouts;
+CREATE POLICY "Workouts personal access" ON workouts FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Workouts student access" ON workouts FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = workouts."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+-- 5.3 Workout Items RLS
+DROP POLICY IF EXISTS "Workout items access" ON workout_items;
+DROP POLICY IF EXISTS "Workout items personal access" ON workout_items;
+DROP POLICY IF EXISTS "Workout items student access" ON workout_items;
+CREATE POLICY "Workout items personal access" ON workout_items FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM workouts 
+    WHERE workouts.id = workout_items."workoutId" 
+    AND workouts."personalId" = auth.uid()
+  )
+);
+CREATE POLICY "Workout items student access" ON workout_items FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM workouts 
+    JOIN students ON students.id = workouts."studentId"
+    WHERE workouts.id = workout_items."workoutId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+-- 5.4 Appointments RLS
+DROP POLICY IF EXISTS "Appointments access" ON appointments;
+DROP POLICY IF EXISTS "Appointments personal access" ON appointments;
+DROP POLICY IF EXISTS "Appointments student access" ON appointments;
+CREATE POLICY "Appointments personal access" ON appointments FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Appointments student access" ON appointments FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = appointments."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+-- 5.5 Anamneses RLS
+DROP POLICY IF EXISTS "Anamnese personal access" ON anamneses;
+DROP POLICY IF EXISTS "Anamnese student access" ON anamneses;
+CREATE POLICY "Anamnese personal access" ON anamneses FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Anamnese student access" ON anamneses FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = anamneses."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+-- 5.6 Evaluations RLS
+DROP POLICY IF EXISTS "Evaluations personal access" ON evaluations;
+DROP POLICY IF EXISTS "Evaluations student access" ON evaluations;
+CREATE POLICY "Evaluations personal access" ON evaluations FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Evaluations student access" ON evaluations FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM students 
+    WHERE students.id = evaluations."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+-- 6. POPULAR CATEGORIA DE ALONGAMENTOS NA BIBLIOTECA DE EXERCÍCIOS
+INSERT INTO library_exercises (name, category, description, "personalId") VALUES
+  ('Alongamento de Isquiotibiais (Sentado)', 'Alongamento', 'Sente com pernas estendidas e tente tocar a ponta dos pés, mantendo o joelho estendido.', NULL),
+  ('Alongamento de Quadríceps (Em pé)', 'Alongamento', 'De pé, flexione uma perna puxando o calcanhar em direção ao glúteo. Mantenha os joelhos alinhados.', NULL),
+  ('Alongamento de Panturrilha na Parede', 'Alongamento', 'Apoie as mãos na parede, dê um passo para trás e force o calcanhar do pé traseiro contra o chão.', NULL),
+  ('Alongamento Peitoral no Batente', 'Alongamento', 'Apoie o antebraço no batente de uma porta e gire o tronco para o lado oposto suavemente.', NULL),
+  ('Alongamento Lombar (Postura da Criança)', 'Alongamento', 'Ajoelhe-se no chão, sente sobre os calcanhares e estenda os braços à frente no chão, relaxando o tronco.', NULL),
+  ('Alongamento de Tríceps', 'Alongamento', 'Eleve o braço sobre a cabeça, flexione o cotovelo apontando-o para cima e use a outra mão para puxar levemente.', NULL)
+ON CONFLICT DO NOTHING;
+
+-- Notifica o cache do PostgREST
+NOTIFY pgrst, 'reload schema';
+-- FitDesk - Migration: 07_workout_logs
+-- Descrição: Cria tabela para histórico de execução e conclusão de treinos (Workout Logs)
+
+CREATE TABLE IF NOT EXISTS public.workout_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  "workoutId" uuid NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
+  "studentId" uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "workoutName" text NOT NULL,
+  "completedAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "duration" integer DEFAULT 0, -- em minutos
+  "feedback" text,
+  "details" jsonb NOT NULL -- representação detalhada das séries/reps marcadas pelo aluno
+);
+
+-- Habilitar RLS
+ALTER TABLE public.workout_logs ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS
+CREATE POLICY "Personal visualiza todos os logs de seus alunos" 
+ON public.workout_logs FOR SELECT 
+USING (auth.uid() = "personalId");
+
+CREATE POLICY "Aluno visualiza seus próprios logs" 
+ON public.workout_logs FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.students 
+    WHERE students.id = workout_logs."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+CREATE POLICY "Aluno insere seus próprios logs" 
+ON public.workout_logs FOR INSERT 
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.students 
+    WHERE students.id = workout_logs."studentId" 
+    AND students."associatedUserId" = auth.uid()
+  )
+);
+
+CREATE POLICY "Personal insere logs para seus alunos" 
+ON public.workout_logs FOR INSERT 
+WITH CHECK (auth.uid() = "personalId");
+
+-- Recarregar schema para PostgREST
+NOTIFY pgrst, 'reload schema';
 -- ==========================================
 -- FitDesk - Seed: seed.sql
 -- Descrição: Inserts e população de dados de
@@ -286,39 +496,29 @@ NOTIFY pgrst, 'reload schema';
 -- Garante que a extensão pgcrypto está disponível no schema público ou de busca
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- =========================================================================
+-- ATENÇÃO CRÍTICA: CRIAÇÃO DE USUÁRIOS NO AUTH
+-- 
+-- Os usuários NO AUTHENTICATION devem ser criados via script Node.js:
+-- node supabase/scripts/seed-auth-users.mjs
+--
+-- ESTE SCRIPT APENAS INSERE NO public.users APÓS o auth estar populado.
+-- O ID dos usuários em public.users DEVE CORRESPONDER AO ID EM auth.users
+-- =========================================================================
 
--- 1. POPULAR USUÁRIOS DO SISTEMA AUTH DO SUPABASE (Cria credenciais funcionais)
-INSERT INTO auth.users (
-  id, instance_id, email, encrypted_password, email_confirmed_at, 
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
-  role, aud, confirmation_token, recovery_token, email_change_token_new, email_change_token_current
-)
-VALUES 
-  ('e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', '00000000-0000-0000-0000-000000000000', 'master@fitdesk.com.br', crypt('master123', gen_salt('bf', 10)), now(), '{"provider":"email","providers":["email"]}', '{"name":"Admin Master"}', now(), now(), 'authenticated', 'authenticated', '', '', '', ''),
-  ('f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', '00000000-0000-0000-0000-000000000000', 'michel@emailteste.com', crypt('123456', gen_salt('bf', 10)), now(), '{"provider":"email","providers":["email"]}', '{"name":"Michel Personal"}', now(), now(), 'authenticated', 'authenticated', '', '', '', ''),
-  ('c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', '00000000-0000-0000-0000-000000000000', 'ana@emailteste.com', crypt('123456', gen_salt('bf', 10)), now(), '{"provider":"email","providers":["email"]}', '{"name":"Ana Trainer"}', now(), now(), 'authenticated', 'authenticated', '', '', '', '')
+-- IMPORTANTE: Execute o script de auth ANTES de rodar este seed!
+-- Senão as foreign keys falharão.
+
+-- 1. USUÁRIOS NO SCHEMA PUBLIC (vinculados ao auth.users via ID)
+-- Estes dados são sincronizados pelo seed-auth-users.mjs
+INSERT INTO public.users (id, name, email, role) VALUES 
+  ('e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', 'Admin Master', 'master@fitdesk.com.br', 'MASTER'),
+  ('f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', 'Michel Personal', 'michel@emailteste.com', 'PERSONAL'),
+  ('c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', 'Ana Trainer', 'ana@emailteste.com', 'PERSONAL')
 ON CONFLICT (id) DO UPDATE SET 
-  encrypted_password = EXCLUDED.encrypted_password,
-  confirmation_token = EXCLUDED.confirmation_token,
-  recovery_token = EXCLUDED.recovery_token,
-  email_change_token_new = EXCLUDED.email_change_token_new,
-  email_change_token_current = EXCLUDED.email_change_token_current;
-
--- 2. POPULAR IDENTIDADES DO AUTH (Necessário para a consistência interna do Supabase Auth)
-INSERT INTO auth.identities (id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, provider_id)
-VALUES 
-  (gen_random_uuid(), 'e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', format('{"sub":"%s","email":"%s"}','e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01','master@fitdesk.com.br')::jsonb, 'email', now(), now(), now(), 'e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01'),
-  (gen_random_uuid(), 'f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', format('{"sub":"%s","email":"%s"}','f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d','michel@emailteste.com')::jsonb, 'email', now(), now(), now(), 'f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d'),
-  (gen_random_uuid(), 'c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', format('{"sub":"%s","email":"%s"}','c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f','ana@emailteste.com')::jsonb, 'email', now(), now(), now(), 'c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f')
-ON CONFLICT (provider_id, provider) DO NOTHING;
-
--- 3. POPULAR PERFIS PÚBLICOS DE USUÁRIOS
-INSERT INTO public.users (id, name, email, password, role) VALUES 
-  ('e7b3a4d8-c1e2-4f3a-9b5d-0e6a7b8c9d01', 'Admin Master', 'master@fitdesk.com.br', crypt('master123', gen_salt('bf', 10)), 'MASTER'),
-  ('f1a2b3c4-d5e6-4a7b-8c9d-0e1f2a3b4c5d', 'Michel Personal', 'michel@emailteste.com', crypt('123456', gen_salt('bf', 10)), 'PERSONAL'),
-  ('c9d8e7f6-a5b4-4c3d-2e1f-0a1b2c3d4e5f', 'Ana Trainer', 'ana@emailteste.com', crypt('123456', gen_salt('bf', 10)), 'PERSONAL')
-ON CONFLICT (id) DO UPDATE SET 
-  password = EXCLUDED.password;
+  name = EXCLUDED.name,
+  email = EXCLUDED.email,
+  role = EXCLUDED.role;
 
 -- 4. GRUPOS DE ESTUDANTES
 INSERT INTO student_groups (id, name, description, color, "personalId") VALUES

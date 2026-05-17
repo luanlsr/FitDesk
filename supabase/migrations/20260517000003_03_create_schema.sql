@@ -6,7 +6,7 @@
 
 -- 1. CRIAÇÃO DAS TABELAS DO BANCO DE DADOS
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS public.users (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text,
   email text UNIQUE,
@@ -18,16 +18,16 @@ CREATE TABLE users (
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE student_groups (
+CREATE TABLE IF NOT EXISTS public.student_groups (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   description text,
   color text DEFAULT '#3b82f6',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS public.students (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   cpf text,
@@ -40,40 +40,40 @@ CREATE TABLE students (
   "startDate" timestamp with time zone DEFAULT now(),
   "paymentDay" integer,
   "planValue" double precision,
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "groupId" uuid REFERENCES student_groups(id) ON DELETE SET NULL,
-  "associatedUserId" uuid REFERENCES users(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "groupId" uuid REFERENCES public.student_groups(id) ON DELETE SET NULL,
+  "associatedUserId" uuid REFERENCES public.users(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS public.appointments (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   title text NOT NULL,
   description text,
   start timestamp with time zone NOT NULL,
   "end" timestamp with time zone NOT NULL,
   status text DEFAULT 'Agendado',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "studentId" uuid REFERENCES students(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "studentId" uuid REFERENCES public.students(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE financial_entries (
+CREATE TABLE IF NOT EXISTS public.financial_entries (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   description text NOT NULL,
   amount double precision NOT NULL,
   type text NOT NULL,
   category text NOT NULL,
   date timestamp with time zone DEFAULT now(),
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "studentId" uuid REFERENCES students(id) ON DELETE SET NULL,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  "studentId" uuid REFERENCES public.students(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE leads (
+CREATE TABLE IF NOT EXISTS public.leads (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   email text,
@@ -81,37 +81,37 @@ CREATE TABLE leads (
   origin text,
   value double precision DEFAULT 0,
   status text DEFAULT 'Aguardando',
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE library_exercises (
+CREATE TABLE IF NOT EXISTS public.library_exercises (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   category text NOT NULL,
   "videoUrl" text,
   "imageUrl" text,
   description text,
-  "personalId" uuid REFERENCES users(id) ON DELETE SET NULL,
+  "personalId" uuid REFERENCES public.users(id) ON DELETE SET NULL,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE workouts (
+CREATE TABLE IF NOT EXISTS public.workouts (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   description text,
-  "studentId" uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-  "personalId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "studentId" uuid NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  "personalId" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   "createdAt" timestamp with time zone DEFAULT now(),
   "updatedAt" timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE workout_items (
+CREATE TABLE IF NOT EXISTS public.workout_items (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  "workoutId" uuid NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
-  "exerciseId" uuid NOT NULL REFERENCES library_exercises(id) ON DELETE CASCADE,
+  "workoutId" uuid NOT NULL REFERENCES public.workouts(id) ON DELETE CASCADE,
+  "exerciseId" uuid NOT NULL REFERENCES public.library_exercises(id) ON DELETE CASCADE,
   sets integer NOT NULL,
   reps text NOT NULL,
   weight text,
@@ -120,30 +120,30 @@ CREATE TABLE workout_items (
 );
 
 -- 2. HABILITAÇÃO DO ROW LEVEL SECURITY (RLS) EM TODAS AS TABELAS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE student_groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE financial_entries ENABLE ROW LEVEL SECURITY;
-ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE library_exercises ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workout_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.student_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.financial_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.library_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.workouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.workout_items ENABLE ROW LEVEL SECURITY;
 
 -- 3. POLÍTICAS DE CONTROLE DE ACESSO (SEGURANÇA DO TENANT)
-CREATE POLICY "Users access own profile" ON users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Groups access" ON student_groups FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Students access" ON students FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Appointments access" ON appointments FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Financial access" ON financial_entries FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Leads access" ON leads FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Workouts access" ON workouts FOR ALL USING (auth.uid() = "personalId");
-CREATE POLICY "Exercises access" ON library_exercises FOR ALL USING (auth.uid() = "personalId" OR "personalId" IS NULL);
-CREATE POLICY "Workout items access" ON workout_items FOR ALL USING (
+CREATE POLICY "Users access own profile" ON public.users FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Groups access" ON public.student_groups FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Students access" ON public.students FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Appointments access" ON public.appointments FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Financial access" ON public.financial_entries FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Leads access" ON public.leads FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Workouts access" ON public.workouts FOR ALL USING (auth.uid() = "personalId");
+CREATE POLICY "Exercises access" ON public.library_exercises FOR ALL USING (auth.uid() = "personalId" OR "personalId" IS NULL);
+CREATE POLICY "Workout items access" ON public.workout_items FOR ALL USING (
   EXISTS (
-    SELECT 1 FROM workouts 
-    WHERE workouts.id = workout_items."workoutId" 
-    AND workouts."personalId" = auth.uid()
+    SELECT 1 FROM public.workouts 
+    WHERE public.workouts.id = public.workout_items."workoutId" 
+    AND public.workouts."personalId" = auth.uid()
   )
 );
 
